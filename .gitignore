@@ -16,5 +16,12 @@
 /misc
 /outdated
 
+# data directory
+/data
+
+# Generated figures
+/plot/figures/*
+
 # Slurm submission script
 /run_ff3d.slurm
+
