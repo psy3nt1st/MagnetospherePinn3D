@@ -1,194 +1,0 @@
-==================== Starting job 2782359_2 ====================
-
-Loading Julia module...                 Done
-Instantiating project environment...    Precompiling project...
-  ✓ PulsarPinn3D
-  1 dependency successfully precompiled in 22 seconds. 707 already precompiled. 1 skipped during auto due to previous errors.
-Done
-Executing julia script...               
-┌ Warning: Number of combinations (27) does not match number of tasks (2).
-└ @ Main ~/PulsarPinn3D/src/ff3d.jl:13
-Adam set 2 / 4   2%|▌                      |  ETA: 0:00:09 (45.63 ms/it)[K
-  iteration:  5[K
-  Loss:       3.3113e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4   8%|█▊                     |  ETA: 0:00:11 (58.08 ms/it)[K
-  iteration:  16[K
-  Loss:       2.6510e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  10%|██▎                    |  ETA: 0:00:09 (49.13 ms/it)[K
-  iteration:  21[K
-  Loss:       2.4912e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  12%|██▉                    |  ETA: 0:00:08 (43.80 ms/it)[K
-  iteration:  26[K
-  Loss:       2.3590e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  14%|███▍                   |  ETA: 0:00:07 (41.81 ms/it)[K
-  iteration:  30[K
-  Loss:       2.2667e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  16%|███▊                   |  ETA: 0:00:07 (43.47 ms/it)[K
-  iteration:  34[K
-  Loss:       2.1836e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  19%|████▍                  |  ETA: 0:00:07 (40.77 ms/it)[K
-  iteration:  39[K
-  Loss:       2.0902e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  22%|█████                  |  ETA: 0:00:06 (38.76 ms/it)[K
-  iteration:  44[K
-  Loss:       2.0067e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  23%|█████▎                 |  ETA: 0:00:06 (39.20 ms/it)[K
-  iteration:  47[K
-  Loss:       1.9607e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  26%|█████▉                 |  ETA: 0:00:06 (37.71 ms/it)[K
-  iteration:  52[K
-  Loss:       1.8903e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  28%|██████▌                |  ETA: 0:00:05 (36.43 ms/it)[K
-  iteration:  57[K
-  Loss:       1.8268e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  30%|██████▊                |  ETA: 0:00:05 (36.92 ms/it)[K
-  iteration:  60[K
-  Loss:       1.7917e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  32%|███████▍               |  ETA: 0:00:05 (35.88 ms/it)[K
-  iteration:  65[K
-  Loss:       1.7379e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  34%|███████▉               |  ETA: 0:00:05 (34.97 ms/it)[K
-  iteration:  70[K
-  Loss:       1.6894e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  36%|████████▎              |  ETA: 0:00:05 (35.38 ms/it)[K
-  iteration:  73[K
-  Loss:       1.6626e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  38%|████████▉              |  ETA: 0:00:04 (34.62 ms/it)[K
-  iteration:  78[K
-  Loss:       1.6215e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  41%|█████████▍             |  ETA: 0:00:04 (33.96 ms/it)[K
-  iteration:  83[K
-  Loss:       1.5845e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  42%|█████████▊             |  ETA: 0:00:04 (34.36 ms/it)[K
-  iteration:  86[K
-  Loss:       1.5640e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  45%|██████████▍            |  ETA: 0:00:04 (33.76 ms/it)[K
-  iteration:  91[K
-  Loss:       1.5325e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  48%|██████████▉            |  ETA: 0:00:03 (33.21 ms/it)[K
-  iteration:  96[K
-  Loss:       1.5040e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  49%|███████████▎           |  ETA: 0:00:03 (33.58 ms/it)[K
-  iteration:  99[K
-  Loss:       1.4882e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  52%|███████████▉           |  ETA: 0:00:03 (33.12 ms/it)[K
-  iteration:  104[K
-  Loss:       1.4637e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  54%|████████████▍          |  ETA: 0:00:03 (32.66 ms/it)[K
-  iteration:  109[K
-  Loss:       1.4413e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  56%|████████████▊          |  ETA: 0:00:03 (33.03 ms/it)[K
-  iteration:  112[K
-  Loss:       1.4288e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  58%|█████████████▍         |  ETA: 0:00:03 (32.63 ms/it)[K
-  iteration:  117[K
-  Loss:       1.4092e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  60%|█████████████▉         |  ETA: 0:00:03 (32.25 ms/it)[K
-  iteration:  122[K
-  Loss:       1.3911e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  62%|██████████████▎        |  ETA: 0:00:02 (32.59 ms/it)[K
-  iteration:  125[K
-  Loss:       1.3808e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  64%|██████████████▉        |  ETA: 0:00:02 (32.27 ms/it)[K
-  iteration:  130[K
-  Loss:       1.3646e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  67%|███████████████▍       |  ETA: 0:00:02 (31.95 ms/it)[K
-  iteration:  135[K
-  Loss:       1.3494e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  68%|███████████████▊       |  ETA: 0:00:02 (32.27 ms/it)[K
-  iteration:  138[K
-  Loss:       1.3407e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  71%|████████████████▍      |  ETA: 0:00:02 (31.97 ms/it)[K
-  iteration:  143[K
-  Loss:       1.3269e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  74%|████████████████▉      |  ETA: 0:00:02 (31.68 ms/it)[K
-  iteration:  148[K
-  Loss:       1.3138e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  75%|█████████████████▎     |  ETA: 0:00:02 (31.96 ms/it)[K
-  iteration:  151[K
-  Loss:       1.3062e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  78%|█████████████████▉     |  ETA: 0:00:01 (31.71 ms/it)[K
-  iteration:  156[K
-  Loss:       1.2940e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  80%|██████████████████▍    |  ETA: 0:00:01 (31.46 ms/it)[K
-  iteration:  161[K
-  Loss:       1.2824e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  82%|██████████████████▊    |  ETA: 0:00:01 (31.73 ms/it)[K
-  iteration:  164[K
-  Loss:       1.2756e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  84%|███████████████████▍   |  ETA: 0:00:01 (31.48 ms/it)[K
-  iteration:  169[K
-  Loss:       1.2647e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  86%|███████████████████▉   |  ETA: 0:00:01 (31.25 ms/it)[K
-  iteration:  174[K
-  Loss:       1.2542e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  88%|████████████████████▎  |  ETA: 0:00:01 (31.49 ms/it)[K
-  iteration:  177[K
-  Loss:       1.2481e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  90%|████████████████████▉  |  ETA: 0:00:01 (31.28 ms/it)[K
-  iteration:  182[K
-  Loss:       1.2382e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  93%|█████████████████████▍ |  ETA: 0:00:00 (31.08 ms/it)[K
-  iteration:  187[K
-  Loss:       1.2286e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  94%|█████████████████████▊ |  ETA: 0:00:00 (31.32 ms/it)[K
-  iteration:  190[K
-  Loss:       1.2230e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  97%|██████████████████████▎|  ETA: 0:00:00 (31.12 ms/it)[K
-  iteration:  195[K
-  Loss:       1.2138e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4  99%|██████████████████████▉|  ETA: 0:00:00 (30.93 ms/it)[K
-  iteration:  200[K
-  Loss:       1.2050e+00[K[A[A
-
-[K[A[K[AAdam set 2 / 4 100%|███████████████████████| Time: 0:00:06 (30.90 ms/it)[K
-  iteration:  201[K
-  Loss:       1.2032e+00[K
-Done
-   JobName        JobID               Start    Elapsed      State ExitCode 
----------- ------------ ------------------- ---------- ---------- -------- 
-      ff3d 2782359_2    2024-10-07T11:37:24   00:01:58    RUNNING      0:0 
-==================== Ending job 2782359_2 ====================
