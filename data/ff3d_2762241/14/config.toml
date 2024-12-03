@@ -1,0 +1,25 @@
+[architecture]
+N_input = 4
+N_layers = 2
+N_neurons = 30
+N_output = 4
+activation = "tanh"
+N_points = 20000
+rng_seed = 0
+
+[optimization]
+N_sets = 20
+adam_sets = 2
+adam_iters = 500
+quasiNewton_method = "SSBroyden"
+quasiNewton_iters = 500
+loss_function = "MSE"
+
+[model]
+coef = [1.0, 0.0, 0.0]
+Pc = 0.75
+s = 2.0
+sigma = 0.2
+qcmin = 0.2
+alpha0 = 1.5
+theta1 = 45.0

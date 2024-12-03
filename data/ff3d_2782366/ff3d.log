@@ -1,0 +1,926 @@
+
+==================== Starting job 2782366 ====================
+
+Loading Julia module...                 Done
+Instantiating project environment...    Done
+Executing julia script...               
+Adam set 2 / 40   2%|▌                     |  ETA: 0:00:08 (41.83 ms/it)[K
+  iteration:  5[K
+  Loss:       3.3113e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40   8%|█▊                    |  ETA: 0:00:09 (50.69 ms/it)[K
+  iteration:  17[K
+  Loss:       2.6161e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  10%|██▎                   |  ETA: 0:00:08 (43.48 ms/it)[K
+  iteration:  22[K
+  Loss:       2.4630e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  13%|██▉                   |  ETA: 0:00:07 (39.20 ms/it)[K
+  iteration:  27[K
+  Loss:       2.3349e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  16%|███▍                  |  ETA: 0:00:06 (37.42 ms/it)[K
+  iteration:  32[K
+  Loss:       2.2241e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  18%|███▉                  |  ETA: 0:00:06 (38.10 ms/it)[K
+  iteration:  36[K
+  Loss:       2.1449e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  20%|████▍                 |  ETA: 0:00:06 (36.02 ms/it)[K
+  iteration:  41[K
+  Loss:       2.0557e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  22%|█████                 |  ETA: 0:00:05 (35.38 ms/it)[K
+  iteration:  46[K
+  Loss:       1.9757e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  25%|█████▌                |  ETA: 0:00:05 (34.06 ms/it)[K
+  iteration:  51[K
+  Loss:       1.9038e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  28%|██████                |  ETA: 0:00:05 (32.94 ms/it)[K
+  iteration:  56[K
+  Loss:       1.8389e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  30%|██████▋               |  ETA: 0:00:05 (32.81 ms/it)[K
+  iteration:  61[K
+  Loss:       1.7805e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  32%|███████▏              |  ETA: 0:00:04 (31.96 ms/it)[K
+  iteration:  66[K
+  Loss:       1.7278e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  35%|███████▊              |  ETA: 0:00:04 (31.23 ms/it)[K
+  iteration:  71[K
+  Loss:       1.6803e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  38%|████████▎             |  ETA: 0:00:04 (31.23 ms/it)[K
+  iteration:  76[K
+  Loss:       1.6374e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  40%|████████▊             |  ETA: 0:00:04 (30.65 ms/it)[K
+  iteration:  81[K
+  Loss:       1.5988e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  42%|█████████▍            |  ETA: 0:00:04 (30.68 ms/it)[K
+  iteration:  86[K
+  Loss:       1.5640e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  45%|█████████▉            |  ETA: 0:00:03 (30.19 ms/it)[K
+  iteration:  91[K
+  Loss:       1.5325e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  48%|██████████▌           |  ETA: 0:00:03 (29.75 ms/it)[K
+  iteration:  96[K
+  Loss:       1.5040e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  50%|███████████           |  ETA: 0:00:03 (29.82 ms/it)[K
+  iteration:  101[K
+  Loss:       1.4781e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  52%|███████████▌          |  ETA: 0:00:03 (29.45 ms/it)[K
+  iteration:  106[K
+  Loss:       1.4545e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  55%|████████████▏         |  ETA: 0:00:03 (29.53 ms/it)[K
+  iteration:  111[K
+  Loss:       1.4329e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  58%|████████████▋         |  ETA: 0:00:02 (29.21 ms/it)[K
+  iteration:  116[K
+  Loss:       1.4130e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  60%|█████████████▎        |  ETA: 0:00:02 (28.91 ms/it)[K
+  iteration:  121[K
+  Loss:       1.3946e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  62%|█████████████▊        |  ETA: 0:00:02 (29.01 ms/it)[K
+  iteration:  126[K
+  Loss:       1.3775e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  65%|██████████████▎       |  ETA: 0:00:02 (28.74 ms/it)[K
+  iteration:  131[K
+  Loss:       1.3615e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  68%|██████████████▉       |  ETA: 0:00:02 (28.49 ms/it)[K
+  iteration:  136[K
+  Loss:       1.3465e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  70%|███████████████▍      |  ETA: 0:00:02 (28.60 ms/it)[K
+  iteration:  141[K
+  Loss:       1.3323e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  72%|████████████████      |  ETA: 0:00:02 (28.37 ms/it)[K
+  iteration:  146[K
+  Loss:       1.3189e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  75%|████████████████▌     |  ETA: 0:00:01 (28.46 ms/it)[K
+  iteration:  151[K
+  Loss:       1.3062e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  78%|█████████████████     |  ETA: 0:00:01 (28.26 ms/it)[K
+  iteration:  156[K
+  Loss:       1.2940e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  80%|█████████████████▋    |  ETA: 0:00:01 (28.06 ms/it)[K
+  iteration:  161[K
+  Loss:       1.2824e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  82%|██████████████████▏   |  ETA: 0:00:01 (28.17 ms/it)[K
+  iteration:  166[K
+  Loss:       1.2712e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  85%|██████████████████▊   |  ETA: 0:00:01 (27.99 ms/it)[K
+  iteration:  171[K
+  Loss:       1.2605e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  88%|███████████████████▎  |  ETA: 0:00:01 (28.08 ms/it)[K
+  iteration:  176[K
+  Loss:       1.2501e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  90%|███████████████████▊  |  ETA: 0:00:01 (27.92 ms/it)[K
+  iteration:  181[K
+  Loss:       1.2401e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  92%|████████████████████▍ |  ETA: 0:00:00 (27.76 ms/it)[K
+  iteration:  186[K
+  Loss:       1.2305e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  95%|████████████████████▉ |  ETA: 0:00:00 (27.86 ms/it)[K
+  iteration:  191[K
+  Loss:       1.2211e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40  98%|█████████████████████▌|  ETA: 0:00:00 (27.71 ms/it)[K
+  iteration:  196[K
+  Loss:       1.2120e+00[K[A[A
+
+[K[A[K[AAdam set 2 / 40 100%|██████████████████████| Time: 0:00:05 (27.57 ms/it)[K
+  iteration:  201[K
+  Loss:       1.2032e+00[K
+SSBroyden set 6 / 40   1%|▏                |  ETA: 0:03:41 ( 1.12  s/it)[K
+  iteration:  207[K
+  Loss:       1.3841e+00[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40   2%|▎                |  ETA: 0:02:02 ( 0.62  s/it)[K
+  iteration:  208[K
+  Loss:       1.2889e+00[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40   2%|▍                |  ETA: 0:01:07 ( 0.34  s/it)[K
+  iteration:  210[K
+  Loss:       1.1510e+00[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40   4%|▋                |  ETA: 0:00:51 ( 0.26  s/it)[K
+  iteration:  212[K
+  Loss:       1.0215e+00[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40   4%|▊                |  ETA: 0:00:42 ( 0.22  s/it)[K
+  iteration:  214[K
+  Loss:       8.9447e-01[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40   5%|▉                |  ETA: 0:00:39 ( 0.21  s/it)[K
+  iteration:  215[K
+  Loss:       8.1891e-01[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40   6%|█                |  ETA: 0:00:35 ( 0.18  s/it)[K
+  iteration:  217[K
+  Loss:       6.7097e-01[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40   7%|█▎               |  ETA: 0:00:32 ( 0.17  s/it)[K
+  iteration:  219[K
+  Loss:       5.1548e-01[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40   8%|█▍               |  ETA: 0:00:29 ( 0.16  s/it)[K
+  iteration:  221[K
+  Loss:       3.8824e-01[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40   8%|█▌               |  ETA: 0:00:29 ( 0.16  s/it)[K
+  iteration:  222[K
+  Loss:       3.2464e-01[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  10%|█▋               |  ETA: 0:00:27 ( 0.15  s/it)[K
+  iteration:  224[K
+  Loss:       2.7537e-01[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  10%|█▊               |  ETA: 0:00:26 ( 0.14  s/it)[K
+  iteration:  226[K
+  Loss:       2.5280e-01[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  12%|██▏              |  ETA: 0:00:22 ( 0.13  s/it)[K
+  iteration:  230[K
+  Loss:       2.0435e-01[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  14%|██▎              |  ETA: 0:00:22 ( 0.13  s/it)[K
+  iteration:  232[K
+  Loss:       1.9405e-01[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  16%|██▋              |  ETA: 0:00:20 ( 0.12  s/it)[K
+  iteration:  236[K
+  Loss:       1.6147e-01[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  16%|██▊              |  ETA: 0:00:19 ( 0.11  s/it)[K
+  iteration:  238[K
+  Loss:       1.3777e-01[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  18%|███              |  ETA: 0:00:18 ( 0.11  s/it)[K
+  iteration:  240[K
+  Loss:       1.1209e-01[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  18%|███              |  ETA: 0:00:18 ( 0.11  s/it)[K
+  iteration:  241[K
+  Loss:       1.0510e-01[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  19%|███▎             |  ETA: 0:00:18 ( 0.11  s/it)[K
+  iteration:  243[K
+  Loss:       9.6584e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  20%|███▍             |  ETA: 0:00:18 ( 0.11  s/it)[K
+  iteration:  244[K
+  Loss:       9.2936e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  20%|███▌             |  ETA: 0:00:17 ( 0.11  s/it)[K
+  iteration:  246[K
+  Loss:       8.7647e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  22%|███▉             |  ETA: 0:00:16 ( 0.10  s/it)[K
+  iteration:  250[K
+  Loss:       7.8395e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  24%|████             |  ETA: 0:00:16 ( 0.10  s/it)[K
+  iteration:  252[K
+  Loss:       7.4648e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  24%|████▏            |  ETA: 0:00:15 ( 0.10  s/it)[K
+  iteration:  254[K
+  Loss:       7.1457e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  26%|████▍            |  ETA: 0:00:15 ( 0.10  s/it)[K
+  iteration:  256[K
+  Loss:       6.6916e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  27%|████▋            |  ETA: 0:00:14 (97.73 ms/it)[K
+  iteration:  259[K
+  Loss:       6.2047e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  28%|████▊            |  ETA: 0:00:14 (96.84 ms/it)[K
+  iteration:  261[K
+  Loss:       5.9712e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  30%|█████▏           |  ETA: 0:00:13 (94.40 ms/it)[K
+  iteration:  265[K
+  Loss:       5.4969e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  32%|█████▍           |  ETA: 0:00:13 (91.77 ms/it)[K
+  iteration:  268[K
+  Loss:       5.2588e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  32%|█████▌           |  ETA: 0:00:12 (92.24 ms/it)[K
+  iteration:  270[K
+  Loss:       5.1302e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  34%|█████▉           |  ETA: 0:00:12 (90.66 ms/it)[K
+  iteration:  274[K
+  Loss:       4.9403e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  36%|██████▏          |  ETA: 0:00:11 (88.54 ms/it)[K
+  iteration:  277[K
+  Loss:       4.8140e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  38%|██████▍          |  ETA: 0:00:11 (87.89 ms/it)[K
+  iteration:  280[K
+  Loss:       4.7030e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  40%|██████▊          |  ETA: 0:00:10 (85.86 ms/it)[K
+  iteration:  284[K
+  Loss:       4.5897e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  40%|██████▉          |  ETA: 0:00:10 (85.55 ms/it)[K
+  iteration:  286[K
+  Loss:       4.5215e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  42%|███████▎         |  ETA: 0:00:10 (83.18 ms/it)[K
+  iteration:  290[K
+  Loss:       4.4316e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  44%|███████▌         |  ETA: 0:00:09 (82.50 ms/it)[K
+  iteration:  293[K
+  Loss:       4.3523e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  45%|███████▋         |  ETA: 0:00:09 (82.28 ms/it)[K
+  iteration:  295[K
+  Loss:       4.2746e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  46%|███████▉         |  ETA: 0:00:09 (82.16 ms/it)[K
+  iteration:  297[K
+  Loss:       4.2038e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  47%|████████         |  ETA: 0:00:09 (82.00 ms/it)[K
+  iteration:  299[K
+  Loss:       4.1231e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  48%|████████▏        |  ETA: 0:00:09 (82.35 ms/it)[K
+  iteration:  301[K
+  Loss:       4.0677e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  50%|████████▌        |  ETA: 0:00:08 (81.98 ms/it)[K
+  iteration:  305[K
+  Loss:       3.9851e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  52%|████████▉        |  ETA: 0:00:08 (80.69 ms/it)[K
+  iteration:  309[K
+  Loss:       3.9019e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  53%|█████████        |  ETA: 0:00:08 (80.56 ms/it)[K
+  iteration:  311[K
+  Loss:       3.8755e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  55%|█████████▍       |  ETA: 0:00:07 (79.39 ms/it)[K
+  iteration:  315[K
+  Loss:       3.7742e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  57%|█████████▊       |  ETA: 0:00:07 (78.73 ms/it)[K
+  iteration:  319[K
+  Loss:       3.6642e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  58%|█████████▉       |  ETA: 0:00:07 (78.35 ms/it)[K
+  iteration:  321[K
+  Loss:       3.6186e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  59%|██████████       |  ETA: 0:00:06 (78.27 ms/it)[K
+  iteration:  323[K
+  Loss:       3.5327e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  60%|██████████▎      |  ETA: 0:00:06 (78.18 ms/it)[K
+  iteration:  325[K
+  Loss:       3.4762e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  62%|██████████▌      |  ETA: 0:00:06 (77.64 ms/it)[K
+  iteration:  329[K
+  Loss:       3.3607e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  63%|██████████▊      |  ETA: 0:00:06 (77.20 ms/it)[K
+  iteration:  331[K
+  Loss:       3.3058e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  64%|██████████▉      |  ETA: 0:00:06 (77.17 ms/it)[K
+  iteration:  333[K
+  Loss:       3.2546e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  66%|███████████▎     |  ETA: 0:00:05 (76.43 ms/it)[K
+  iteration:  337[K
+  Loss:       3.1554e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  67%|███████████▍     |  ETA: 0:00:05 (76.42 ms/it)[K
+  iteration:  339[K
+  Loss:       3.0909e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  68%|███████████▋     |  ETA: 0:00:05 (75.62 ms/it)[K
+  iteration:  342[K
+  Loss:       3.0179e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  70%|███████████▉     |  ETA: 0:00:05 (75.94 ms/it)[K
+  iteration:  344[K
+  Loss:       2.9660e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  72%|████████████▏    |  ETA: 0:00:04 (75.17 ms/it)[K
+  iteration:  348[K
+  Loss:       2.8588e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  72%|████████████▍    |  ETA: 0:00:04 (74.83 ms/it)[K
+  iteration:  350[K
+  Loss:       2.8032e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  74%|████████████▌    |  ETA: 0:00:04 (74.81 ms/it)[K
+  iteration:  352[K
+  Loss:       2.7547e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  74%|████████████▋    |  ETA: 0:00:04 (74.57 ms/it)[K
+  iteration:  354[K
+  Loss:       2.6806e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  75%|████████████▊    |  ETA: 0:00:04 (75.51 ms/it)[K
+  iteration:  355[K
+  Loss:       2.6484e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  76%|████████████▉    |  ETA: 0:00:04 (76.13 ms/it)[K
+  iteration:  356[K
+  Loss:       2.6006e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  76%|█████████████    |  ETA: 0:00:04 (76.11 ms/it)[K
+  iteration:  358[K
+  Loss:       2.5465e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  78%|█████████████▏   |  ETA: 0:00:03 (76.42 ms/it)[K
+  iteration:  360[K
+  Loss:       2.5001e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  78%|█████████████▍   |  ETA: 0:00:03 (76.39 ms/it)[K
+  iteration:  362[K
+  Loss:       2.4390e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  80%|█████████████▌   |  ETA: 0:00:03 (76.67 ms/it)[K
+  iteration:  364[K
+  Loss:       2.3951e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  82%|█████████████▉   |  ETA: 0:00:03 (75.99 ms/it)[K
+  iteration:  368[K
+  Loss:       2.2979e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  82%|██████████████   |  ETA: 0:00:03 (76.27 ms/it)[K
+  iteration:  370[K
+  Loss:       2.2638e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  84%|██████████████▎  |  ETA: 0:00:03 (76.24 ms/it)[K
+  iteration:  372[K
+  Loss:       2.2336e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  84%|██████████████▎  |  ETA: 0:00:02 (76.54 ms/it)[K
+  iteration:  373[K
+  Loss:       2.2199e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  86%|██████████████▋  |  ETA: 0:00:02 (75.89 ms/it)[K
+  iteration:  377[K
+  Loss:       2.1267e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  87%|██████████████▊  |  ETA: 0:00:02 (76.16 ms/it)[K
+  iteration:  379[K
+  Loss:       2.0842e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  88%|███████████████  |  ETA: 0:00:02 (76.51 ms/it)[K
+  iteration:  381[K
+  Loss:       2.0466e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  90%|███████████████▎ |  ETA: 0:00:02 (76.18 ms/it)[K
+  iteration:  385[K
+  Loss:       1.9280e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  91%|███████████████▌ |  ETA: 0:00:01 (76.43 ms/it)[K
+  iteration:  387[K
+  Loss:       1.8843e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  93%|███████████████▊ |  ETA: 0:00:01 (76.41 ms/it)[K
+  iteration:  391[K
+  Loss:       1.8062e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  94%|████████████████ |  ETA: 0:00:01 (76.39 ms/it)[K
+  iteration:  393[K
+  Loss:       1.7748e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  96%|████████████████▍|  ETA: 0:00:01 (76.44 ms/it)[K
+  iteration:  397[K
+  Loss:       1.6943e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  96%|████████████████▍|  ETA: 0:00:01 (76.70 ms/it)[K
+  iteration:  398[K
+  Loss:       1.6785e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  98%|████████████████▋|  ETA: 0:00:00 (76.15 ms/it)[K
+  iteration:  401[K
+  Loss:       1.6346e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  99%|████████████████▉|  ETA: 0:00:00 (76.13 ms/it)[K
+  iteration:  403[K
+  Loss:       1.5926e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40  99%|████████████████▉|  ETA: 0:00:00 (76.39 ms/it)[K
+  iteration:  404[K
+  Loss:       1.5756e-02[K[A[A
+
+[K[A[K[ASSBroyden set 6 / 40 100%|█████████████████| Time: 0:00:15 (76.38 ms/it)[K
+  iteration:  405[K
+  Loss:       1.5624e-02[K
+SSBroyden set 9 / 40   1%|▏                |  ETA: 0:00:39 ( 0.20  s/it)[K
+  iteration:  410[K
+  Loss:       1.5537e-02[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40   2%|▍                |  ETA: 0:00:23 ( 0.12  s/it)[K
+  iteration:  412[K
+  Loss:       1.5220e-02[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40   2%|▍                |  ETA: 0:00:23 ( 0.12  s/it)[K
+  iteration:  413[K
+  Loss:       1.5123e-02[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40   4%|▋                |  ETA: 0:00:20 ( 0.10  s/it)[K
+  iteration:  415[K
+  Loss:       1.4797e-02[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40   4%|▊                |  ETA: 0:00:20 ( 0.11  s/it)[K
+  iteration:  417[K
+  Loss:       1.4500e-02[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40   6%|█                |  ETA: 0:00:17 (92.25 ms/it)[K
+  iteration:  420[K
+  Loss:       1.4109e-02[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40   8%|█▍               |  ETA: 0:00:16 (88.80 ms/it)[K
+  iteration:  424[K
+  Loss:       1.3495e-02[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40   9%|█▌               |  ETA: 0:00:16 (90.12 ms/it)[K
+  iteration:  426[K
+  Loss:       1.3323e-02[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  11%|█▉               |  ETA: 0:00:15 (82.32 ms/it)[K
+  iteration:  430[K
+  Loss:       1.2721e-02[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  12%|██               |  ETA: 0:00:15 (83.84 ms/it)[K
+  iteration:  432[K
+  Loss:       1.2469e-02[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  14%|██▍              |  ETA: 0:00:14 (80.65 ms/it)[K
+  iteration:  436[K
+  Loss:       1.1861e-02[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  15%|██▌              |  ETA: 0:00:14 (80.21 ms/it)[K
+  iteration:  438[K
+  Loss:       1.1544e-02[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  16%|██▊              |  ETA: 0:00:14 (81.48 ms/it)[K
+  iteration:  440[K
+  Loss:       1.1322e-02[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  18%|███              |  ETA: 0:00:13 (79.40 ms/it)[K
+  iteration:  443[K
+  Loss:       1.1007e-02[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  20%|███▍             |  ETA: 0:00:13 (78.97 ms/it)[K
+  iteration:  447[K
+  Loss:       1.0460e-02[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  20%|███▌             |  ETA: 0:00:13 (80.08 ms/it)[K
+  iteration:  449[K
+  Loss:       1.0287e-02[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  22%|███▉             |  ETA: 0:00:12 (77.27 ms/it)[K
+  iteration:  453[K
+  Loss:       9.8270e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  24%|████             |  ETA: 0:00:12 (78.26 ms/it)[K
+  iteration:  455[K
+  Loss:       9.5810e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  24%|████▏            |  ETA: 0:00:12 (78.09 ms/it)[K
+  iteration:  457[K
+  Loss:       9.4106e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  26%|████▍            |  ETA: 0:00:12 (77.99 ms/it)[K
+  iteration:  459[K
+  Loss:       9.2756e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  28%|████▋            |  ETA: 0:00:11 (78.08 ms/it)[K
+  iteration:  463[K
+  Loss:       8.9149e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  28%|████▉            |  ETA: 0:00:11 (77.36 ms/it)[K
+  iteration:  465[K
+  Loss:       8.7936e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  30%|█████▏           |  ETA: 0:00:11 (77.52 ms/it)[K
+  iteration:  469[K
+  Loss:       8.4856e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  32%|█████▌           |  ETA: 0:00:10 (76.58 ms/it)[K
+  iteration:  472[K
+  Loss:       8.3908e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  34%|█████▊           |  ETA: 0:00:10 (75.71 ms/it)[K
+  iteration:  476[K
+  Loss:       8.1215e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  35%|██████           |  ETA: 0:00:10 (75.67 ms/it)[K
+  iteration:  478[K
+  Loss:       7.9739e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  36%|██████▎          |  ETA: 0:00:09 (74.23 ms/it)[K
+  iteration:  481[K
+  Loss:       7.7435e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  38%|██████▍          |  ETA: 0:00:09 (74.97 ms/it)[K
+  iteration:  483[K
+  Loss:       7.5518e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  38%|██████▌          |  ETA: 0:00:09 (74.95 ms/it)[K
+  iteration:  485[K
+  Loss:       7.4530e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  40%|██████▉          |  ETA: 0:00:09 (74.30 ms/it)[K
+  iteration:  489[K
+  Loss:       7.2588e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  42%|███████          |  ETA: 0:00:09 (74.90 ms/it)[K
+  iteration:  491[K
+  Loss:       7.1681e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  44%|███████▍         |  ETA: 0:00:08 (74.12 ms/it)[K
+  iteration:  495[K
+  Loss:       6.9770e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  44%|███████▋         |  ETA: 0:00:08 (74.96 ms/it)[K
+  iteration:  497[K
+  Loss:       6.9167e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  46%|███████▉         |  ETA: 0:00:08 (73.30 ms/it)[K
+  iteration:  501[K
+  Loss:       6.7172e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  48%|████████▏        |  ETA: 0:00:08 (73.86 ms/it)[K
+  iteration:  504[K
+  Loss:       6.5931e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  50%|████████▌        |  ETA: 0:00:07 (73.38 ms/it)[K
+  iteration:  508[K
+  Loss:       6.4209e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  52%|████████▉        |  ETA: 0:00:07 (72.95 ms/it)[K
+  iteration:  512[K
+  Loss:       6.2470e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  54%|█████████▏       |  ETA: 0:00:07 (72.07 ms/it)[K
+  iteration:  516[K
+  Loss:       6.0849e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  56%|█████████▌       |  ETA: 0:00:06 (71.75 ms/it)[K
+  iteration:  520[K
+  Loss:       5.8907e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  58%|█████████▊       |  ETA: 0:00:06 (70.94 ms/it)[K
+  iteration:  523[K
+  Loss:       5.7658e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  58%|██████████       |  ETA: 0:00:06 (71.45 ms/it)[K
+  iteration:  525[K
+  Loss:       5.6686e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  60%|██████████▏      |  ETA: 0:00:06 (71.22 ms/it)[K
+  iteration:  527[K
+  Loss:       5.6070e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  62%|██████████▌      |  ETA: 0:00:05 (70.94 ms/it)[K
+  iteration:  531[K
+  Loss:       5.4441e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  63%|██████████▊      |  ETA: 0:00:05 (71.05 ms/it)[K
+  iteration:  534[K
+  Loss:       5.3350e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  64%|██████████▉      |  ETA: 0:00:05 (71.10 ms/it)[K
+  iteration:  536[K
+  Loss:       5.2445e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  66%|███████████▎     |  ETA: 0:00:05 (70.97 ms/it)[K
+  iteration:  540[K
+  Loss:       5.0953e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  68%|███████████▌     |  ETA: 0:00:05 (70.30 ms/it)[K
+  iteration:  543[K
+  Loss:       5.0274e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  70%|███████████▉     |  ETA: 0:00:04 (70.19 ms/it)[K
+  iteration:  547[K
+  Loss:       4.8741e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  71%|████████████▏    |  ETA: 0:00:04 (69.56 ms/it)[K
+  iteration:  550[K
+  Loss:       4.7668e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  72%|████████████▎    |  ETA: 0:00:04 (69.99 ms/it)[K
+  iteration:  552[K
+  Loss:       4.6953e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  74%|████████████▋    |  ETA: 0:00:04 (69.90 ms/it)[K
+  iteration:  556[K
+  Loss:       4.5529e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  76%|████████████▉    |  ETA: 0:00:03 (69.02 ms/it)[K
+  iteration:  560[K
+  Loss:       4.4425e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  78%|█████████████▏   |  ETA: 0:00:03 (68.81 ms/it)[K
+  iteration:  563[K
+  Loss:       4.3712e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  78%|█████████████▍   |  ETA: 0:00:03 (68.99 ms/it)[K
+  iteration:  565[K
+  Loss:       4.3230e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  80%|█████████████▋   |  ETA: 0:00:03 (68.84 ms/it)[K
+  iteration:  569[K
+  Loss:       4.1959e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  82%|██████████████   |  ETA: 0:00:02 (68.96 ms/it)[K
+  iteration:  572[K
+  Loss:       4.1047e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  84%|██████████████▎  |  ETA: 0:00:02 (68.19 ms/it)[K
+  iteration:  576[K
+  Loss:       4.0336e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  86%|██████████████▌  |  ETA: 0:00:02 (68.31 ms/it)[K
+  iteration:  579[K
+  Loss:       3.9637e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  88%|███████████████  |  ETA: 0:00:02 (67.05 ms/it)[K
+  iteration:  584[K
+  Loss:       3.8547e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  90%|███████████████▎ |  ETA: 0:00:01 (67.20 ms/it)[K
+  iteration:  587[K
+  Loss:       3.7846e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  92%|███████████████▌ |  ETA: 0:00:01 (66.90 ms/it)[K
+  iteration:  591[K
+  Loss:       3.6811e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  92%|███████████████▊ |  ETA: 0:00:01 (67.27 ms/it)[K
+  iteration:  593[K
+  Loss:       3.6209e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  94%|███████████████▉ |  ETA: 0:00:01 (67.61 ms/it)[K
+  iteration:  595[K
+  Loss:       3.5643e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  94%|████████████████▏|  ETA: 0:00:01 (67.69 ms/it)[K
+  iteration:  597[K
+  Loss:       3.5252e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  96%|████████████████▎|  ETA: 0:00:01 (67.59 ms/it)[K
+  iteration:  599[K
+  Loss:       3.4787e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  96%|████████████████▍|  ETA: 0:00:01 (67.90 ms/it)[K
+  iteration:  600[K
+  Loss:       3.4568e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  97%|████████████████▌|  ETA: 0:00:00 (67.96 ms/it)[K
+  iteration:  602[K
+  Loss:       3.4064e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  98%|████████████████▋|  ETA: 0:00:00 (68.26 ms/it)[K
+  iteration:  603[K
+  Loss:       3.3814e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  98%|████████████████▊|  ETA: 0:00:00 (68.33 ms/it)[K
+  iteration:  605[K
+  Loss:       3.3424e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40  99%|████████████████▉|  ETA: 0:00:00 (68.65 ms/it)[K
+  iteration:  607[K
+  Loss:       3.2975e-03[K[A[A
+
+[K[A[K[ASSBroyden set 9 / 40 100%|█████████████████| Time: 0:00:13 (68.68 ms/it)[K
+  iteration:  608[K
+  Loss:       3.2809e-03[K
+SSBroyden set 10 / 40   1%|▏               |  ETA: 0:01:22 ( 0.41  s/it)[K
+  iteration:  611[K
+  Loss:       4.4294e-03[K[A[A
+
+[K[A[K[ASSBroyden set 10 / 40   2%|▎               |  ETA: 0:01:38 ( 0.50  s/it)[K
+  iteration:  612[K
+  Loss:       4.4054e-03[K[A[A
+
+[K[A[K[ASSBroyden set 10 / 40   2%|▍               |  ETA: 0:01:43 ( 0.53  s/it)[K
+  iteration:  613[K
+  Loss:       4.3694e-03[K[A[A
+
+[K[A[K[ASSBroyden set 10 / 40   2%|▍               |  ETA: 0:01:42 ( 0.53  s/it)[K
+  iteration:  614[K
+  Loss:       4.3523e-03[K[A[A
+
+[K[A[K[ASSBroyden set 10 / 40   3%|▌               |  ETA: 0:01:43 ( 0.53  s/it)[K
+  iteration:  615[K
+  Loss:       4.3437e-03[K[A[A
+
+[K[A[K[ASSBroyden set 10 / 40   4%|▌               |  ETA: 0:01:43 ( 0.53  s/it)[K
+  iteration:  616[K
+  Loss:       4.3352e-03[K[A[A
+
+[K[A[K[ASSBroyden set 10 / 40   4%|▋               |  ETA: 0:01:43 ( 0.54  s/it)[K
+  iteration:  617[K
+  Loss:       4.3267e-03[K[A[A
+
+[K[A[K[ASSBroyden set 10 / 40   4%|▊               |  ETA: 0:01:42 ( 0.53  s/it)[K
+  iteration:  618[K
+  Loss:       4.3183e-03[K[A[A
+
+[K[A[K[ASSBroyden set 10 / 40   5%|▊               |  ETA: 0:01:43 ( 0.54  s/it)[K
+  iteration:  619[K
+  Loss:       4.3098e-03[K[A[A
+
+[K[A[K[ASSBroyden set 10 / 40   6%|▉               |  ETA: 0:01:41 ( 0.54  s/it)[K
+  iteration:  620[K
+  Loss:       4.3014e-03[K[A[A
+
+[K[A[K[ASSBroyden set 10 / 40   6%|█               |  ETA: 0:01:42 ( 0.54  s/it)[K
+  iteration:  621[K
+  Loss:       4.2930e-03[K[A[A
+
+[K[A[K[ASSBroyden set 10 / 40   6%|█               |  ETA: 0:01:42 ( 0.54  s/it)[K
+  iteration:  622[K
+  Loss:       4.2846e-03[K[A[A
+
+[K[A[K[ASSBroyden set 10 / 40   7%|█▏              |  ETA: 0:01:41 ( 0.54  s/it)[K
+  iteration:  623[K
+  Loss:       4.2846e-03[K[A[A
+
+[K[A[K[ASSBroyden set 10 / 40 100%|████████████████| Time: 0:00:07 (35.39 ms/it)[K
+SSBroyden set 11 / 40   1%|▏               |  ETA: 0:01:59 ( 0.60  s/it)[K
+  iteration:  625[K
+  Loss:       3.9487e-03[K[A[A
+
+[K[A[K[ASSBroyden set 11 / 40 100%|████████████████| Time: 0:00:00 ( 3.03 ms/it)[K
+SSBroyden set 14 / 40   1%|▏               |  ETA: 0:01:57 ( 0.59  s/it)[K
+  iteration:  629[K
+  Loss:       3.6303e-03[K[A[A
+
+[K[A[K[ASSBroyden set 14 / 40 100%|████████████████| Time: 0:00:00 ( 2.97 ms/it)[K
+SSBroyden set 15 / 40   1%|▏               |  ETA: 0:01:58 ( 0.60  s/it)[K
+  iteration:  631[K
+  Loss:       3.9012e-03[K[A[A
+
+[K[A[K[ASSBroyden set 15 / 40 100%|████████████████| Time: 0:00:00 ( 3.00 ms/it)[K
+SSBroyden set 16 / 40   1%|▏               |  ETA: 0:01:48 ( 0.55  s/it)[K
+  iteration:  633[K
+  Loss:       4.1686e-03[K[A[A
+
+[K[A[K[ASSBroyden set 16 / 40 100%|████████████████| Time: 0:00:00 ( 2.75 ms/it)[K
+SSBroyden set 17 / 40   1%|▏               |  ETA: 0:01:58 ( 0.60  s/it)[K
+  iteration:  635[K
+  Loss:       4.1537e-03[K[A[A
+
+[K[A[K[ASSBroyden set 17 / 40 100%|████████████████| Time: 0:00:00 ( 2.99 ms/it)[K
+SSBroyden set 18 / 40   1%|▏               |  ETA: 0:01:59 ( 0.60  s/it)[K
+  iteration:  637[K
+  Loss:       5.1584e-03[K[A[A
+
+[K[A[K[ASSBroyden set 18 / 40 100%|████████████████| Time: 0:00:00 ( 3.01 ms/it)[K
+SSBroyden set 19 / 40   1%|▏               |  ETA: 0:01:58 ( 0.60  s/it)[K
+  iteration:  639[K
+  Loss:       4.4096e-03[K[A[A
+
+[K[A[K[ASSBroyden set 19 / 40 100%|████████████████| Time: 0:00:00 ( 3.01 ms/it)[K
+SSBroyden set 21 / 40   1%|▏               |  ETA: 0:01:57 ( 0.59  s/it)[K
+  iteration:  642[K
+  Loss:       4.3810e-03[K[A[A
+
+[K[A[K[ASSBroyden set 21 / 40 100%|████████████████| Time: 0:00:00 ( 2.98 ms/it)[K
+SSBroyden set 22 / 40   1%|▏               |  ETA: 0:01:48 ( 0.55  s/it)[K
+  iteration:  644[K
+  Loss:       3.7027e-03[K[A[A
+
+[K[A[K[ASSBroyden set 22 / 40 100%|████████████████| Time: 0:00:00 ( 2.74 ms/it)[K
+SSBroyden set 24 / 40   1%|▏               |  ETA: 0:01:58 ( 0.60  s/it)[K
+  iteration:  647[K
+  Loss:       3.8015e-03[K[A[A
+
+[K[A[K[ASSBroyden set 24 / 40 100%|████████████████| Time: 0:00:00 ( 3.00 ms/it)[K
+SSBroyden set 27 / 40   1%|▏               |  ETA: 0:01:58 ( 0.59  s/it)[K
+  iteration:  651[K
+  Loss:       4.4962e-03[K[A[A
+
+[K[A[K[ASSBroyden set 27 / 40 100%|████████████████| Time: 0:00:00 ( 2.99 ms/it)[K
+SSBroyden set 28 / 40   1%|▏               |  ETA: 0:01:59 ( 0.60  s/it)[K
+  iteration:  653[K
+  Loss:       3.7803e-03[K[A[A
+
+[K[A[K[ASSBroyden set 28 / 40 100%|████████████████| Time: 0:00:00 ( 3.03 ms/it)[K
+SSBroyden set 29 / 40   1%|▏               |  ETA: 0:01:59 ( 0.60  s/it)[K
+  iteration:  655[K
+  Loss:       4.1917e-03[K[A[A
+
+[K[A[K[ASSBroyden set 29 / 40 100%|████████████████| Time: 0:00:00 ( 3.01 ms/it)[K
+SSBroyden set 30 / 40   1%|▏               |  ETA: 0:01:57 ( 0.59  s/it)[K
+  iteration:  657[K
+  Loss:       4.5506e-03[K[A[A
+
+[K[A[K[ASSBroyden set 30 / 40 100%|████████████████| Time: 0:00:00 ( 2.98 ms/it)[K
+SSBroyden set 34 / 40   1%|▏               |  ETA: 0:01:58 ( 0.60  s/it)[K
+  iteration:  662[K
+  Loss:       3.8062e-03[K[A[A
+
+[K[A[K[ASSBroyden set 34 / 40 100%|████████████████| Time: 0:00:00 ( 3.01 ms/it)[K
+SSBroyden set 35 / 40   1%|▏               |  ETA: 0:01:46 ( 0.54  s/it)[K
+  iteration:  664[K
+  Loss:       4.1761e-03[K[A[A
+
+[K[A[K[ASSBroyden set 35 / 40 100%|████████████████| Time: 0:00:00 ( 2.70 ms/it)[K
+SSBroyden set 36 / 40   1%|▏               |  ETA: 0:01:58 ( 0.59  s/it)[K
+  iteration:  666[K
+  Loss:       3.7659e-03[K[A[A
+
+[K[A[K[ASSBroyden set 36 / 40 100%|████████████████| Time: 0:00:00 ( 2.99 ms/it)[K
+SSBroyden set 37 / 40   1%|▏               |  ETA: 0:01:57 ( 0.59  s/it)[K
+  iteration:  668[K
+  Loss:       3.7734e-03[K[A[A
+
+[K[A[K[ASSBroyden set 37 / 40 100%|████████████████| Time: 0:00:00 ( 2.97 ms/it)[K
+Done
+
+   JobName        JobID               Start    Elapsed      State ExitCode 
+---------- ------------ ------------------- ---------- ---------- -------- 
+      ff3d 2782366      2024-10-07T11:52:05   00:02:34    RUNNING      0:0 
+
+==================== Ending job 2782366 ====================
+
