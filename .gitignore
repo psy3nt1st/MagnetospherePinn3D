@@ -1,9 +1,5 @@
 # Unison sync files
-/.unison.slurm-2815605.out.b3a3c4119398cd65bf4f1b6969c4b942.unison.tmp
-/.unison.slurm-3042578.out.2f13306b5ee36f1b24864d50735e7cc1.unison.tmp
-/.unison.slurm-3042582.out.2f13306b5ee36f1b24864d50735e7cc1.unison.tmp
-/.unison.slurm-3042596.out.2f13306b5ee36f1b24864d50735e7cc1.unison.tmp
-/.unison.slurm-3059130.out.2f13306b5ee36f1b24864d50735e7cc1.unison.tmp
+/.unison.*.tmp
 
 # VScode folder
 /.vscode
@@ -26,4 +22,6 @@
 # Slurm submission script
 /run_ff3d.slurm
 
+# Slurm output files
+slurm*.out
 
