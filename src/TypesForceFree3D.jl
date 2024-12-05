@@ -21,6 +21,7 @@ end
 
 @option "model" mutable struct ModelParams
 	alpha_bc_mode::String = "hotspot"
+	br_bc_mode::String = "axisymmetric"
 	coef::Vector{Float64} = [1.0, 0.0, 0.0]
 	alpha0::Float64 = 1.5
 	theta1::Float64 = 45.0
