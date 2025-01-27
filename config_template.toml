@@ -1,7 +1,7 @@
 # ---------------------------------------------------------------------------- #
 #                Parameters for the neural network architecture                #
 # ---------------------------------------------------------------------------- #
-[architecture]                                        
+[architecture]                                    
 N_input = 4
 N_layers = 2
 N_neurons = 30
