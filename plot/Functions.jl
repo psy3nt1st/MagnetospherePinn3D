@@ -192,95 +192,6 @@ function calculate_l2errors_vs_ϕ(n_q, n_μ, n_ϕ, pinn, Θ_trained, st, params;
 
 end
 
-
-function plot_l2error(resolutions, l2errors)
-	# Create the first figure
-	fig = Figure(size = (800, 600))
-	ax = Axis(fig[1, 1], xlabel = "Resolution", ylabel = "L2 error", xscale = log10, yscale = log10)
-
-	labels = ["Total", L"\hat{r}", L"\hat{\theta}", L"\hat{\phi}", L"\nabla\cdot B", L"B \cdot \nabla \alpha"]
-
-	for (i, l2error) in enumerate(l2errors)
-		lines!(ax, resolutions, l2error, label = labels[i])
-	end
-
-	scaling_factor = l2errors[1][1] / (resolutions[1]^(-2))
-	lines!(ax, resolutions, (resolutions) .^ (-2) .* scaling_factor, label = L"N^{-2}")
-
-	axislegend(ax)
-	display(GLMakie.Screen(), fig)
-end
-
-function plot_l2error_vs_q(q, l2errors_vs_q)
-
-   n_q = size(q, 1)
-
-	fig = Figure(size = (800, 600))
-	ax = Axis(fig[1, 1], xlabel = "q", ylabel = "L2 error", yscale = log10)
-	
-	labels = ["Total", L"\hat{r}", L"\hat{θ}", L"\hat{ϕ}", L"∇⋅\textbf{B}", L"B \cdot \nabla \alpha"]
-	
-	for (i, l2) in enumerate(l2errors_vs_q)
-		lines!(ax, q[2:n_q-1, 1, 1], l2, label = labels[i], )
-	end
-
-	axislegend(ax, position = :lt, merge = true)
-	display(GLMakie.Screen(), fig)
-end
-
-function plot_l2_errors_vs_μ(μ, l2errors_vs_μ)
-
-	n_μ = size(μ, 2)
-
-	fig = Figure(size = (800, 600))
-	ax = Axis(fig[1, 1], xlabel = "μ", ylabel = "L2 error", yscale = log10)
-	
-	labels = ["Total", L"\hat{r}", L"\hat{θ}", L"\hat{ϕ}", L"∇⋅\textbf{B}", L"B \cdot \nabla \alpha"]
-	
-	for (i, l2) in enumerate(l2errors_vs_μ)
-		lines!(ax, μ[1, 2:n_μ-1, 1], l2, label = labels[i], )
-	end
-
-	axislegend(ax, position = :lt, merge = true)
-	display(GLMakie.Screen(), fig)
-	
-end
-
-function plot_l2_errors_vs_ϕ(ϕ, l2errors_vs_ϕ)
-
-	n_ϕ = size(ϕ, 3)
-
-	fig = Figure(size = (800, 600))
-	ax = Axis(fig[1, 1], xlabel = "ϕ", ylabel = "L2 error", yscale = log10)
-	
-	labels = ["Total", L"\hat{r}", L"\hat{θ}", L"\hat{ϕ}", L"∇⋅\textbf{B}", L"B \cdot \nabla \alpha"]
-	
-	for (i, l2) in enumerate(l2errors_vs_ϕ)
-		lines!(ax, ϕ[1, 1, 2:n_ϕ-1], l2, label = labels[i], )
-	end	
-
-	axislegend(ax, position = :lt, merge = true)
-	display(GLMakie.Screen(), fig)
-
-end
-
-function plot_line(sol, lscene)
-   q, μ, ϕ = sol[1,:], sol[2,:], sol[3,:]
-   x = @. √abs(1 - μ^2) / q * cos(ϕ)
-   y = @. √abs(1 - μ^2) / q * sin(ϕ)
-   z = @. μ / q
-
-   lines!(lscene,x, y, z, color=:silver)
-end
-
-function plot_fieldlines(fieldlines, lscene)
-   for l in eachindex(fieldlines)
-      sol = fieldlines[l]
-      plot_line(sol, lscene)
-   end
-end
-
-
 function read_gradrubin_data()
    data = readdlm("../misc/gradrubin_final.dat")
 
@@ -447,4 +358,9 @@ function ∂_∂ϕ(u, ϕ)
     ∂u_∂ϕ[:, :, end] = (3u[:, :, end] - 4u[:, :, end-1] + 1u[:, :, end-2]) ./ (2dϕ)
 
     return ∂u_∂ϕ
+end
+
+function findnearest(A::AbstractArray, t) 
+   
+   return A[findmin(x->abs(x-t), A)[2]]
 end

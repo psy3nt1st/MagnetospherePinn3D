@@ -33,7 +33,7 @@ export
        Lux,  
        Random, 
 
-       # Neural network function
+       # Neural network functions
        generate_input, 
        create_neural_network, 
        setup_optprob,
@@ -53,6 +53,11 @@ export
        export_params,
 
        # Equations
+       grad,
+       diver,
+       curl,
+       laplacian,
+       scalar_product,
        calculate_derivatives,
        calculate_divergence,
        calculate_Bdotgradα,
@@ -61,11 +66,15 @@ export
        calculate_ϕ_equation,
        calculate_divergence,
        calculate_Bdotgradα,
+       calculate_gradB2,
+
        
        # PostProcess
        create_test,
        calculate_energy,
-       integrate_fieldlines!
+       find_footprints,
+       integrate_fieldlines!,
+       findnearest
 
 
        # plot_fieldlines      
