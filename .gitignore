@@ -25,3 +25,5 @@
 # Slurm output files
 slurm*.out
 
+# Scratch file for obsolete lines of code
+src/scratch.jl

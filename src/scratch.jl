@@ -1,3 +1,57 @@
+
+
+elseif params.model.alpha_bc_mode == "diffusive"
+
+	datadir = 
+	@info "Using diffusive α. Data taken from directory: $(datadir)"
+
+	Θ_prev = load(joinpath(datadir,"trained_model.jld2"), "Θ_trained")
+	pinn, _, st = create_neural_network(params)
+
+	dα_dt, diffusive_term, advective_term, α_surface = calclulate_dα_dt(q, μ, ϕ, pinn, Θ_prev, st, ϵ; use_θ = false)
+	
+	return @. α_surface + dt * dα_dt
+
+
+μ_displacement = zeros(Float64, length(fieldlines))
+ϕ_displacement = zeros(Float64, length(fieldlines))
+α_at_footprint1 = zeros(Float64, length(fieldlines))
+α_at_footprint2 = zeros(Float64, length(fieldlines))
+for (i, line) in enumerate(fieldlines)
+	if line.t[end] < 50
+
+		μ_displacement[i] = abs(abs(line.u[1][2]) - abs(line.u[end][2]))
+		ϕ_displacement[i] = abs(abs(line.u[1][3]) - abs(line.u[end][3]))
+
+		NN = pinn(vcat(1, line.u[1][2], cos.(line.u[1][3]), sin.(line.u[1][3])), Θ_trained, st)[1]
+		Nα1 = reshape(NN[4, :], size(line.u[1][2]))
+
+		NN = pinn(vcat(1, line.u[end][2], cos.(line.u[end][3]), sin.(line.u[end][3])), Θ_trained, st)[1]
+		Nα2 = reshape(NN[4, :], size(line.u[end][2]))
+
+		α_at_footprint1[i] = α(1, line.u[1][2], line.u[1][3], Θ_trained, st, Nα1, params)
+		α_at_footprint2[i] = α(1, line.u[end][2], line.u[end][3], Θ_trained, st, Nα2, params)
+
+		println("α at footprint 1 = $(α_at_footprint1[i]), α at footprint 2 = $(α_at_footprint2[i]) difference = $(abs(α_at_footprint1[i] - α_at_footprint2[i]))")
+
+		# if μ_displacement[i] > 1e-7
+		# 	println("ϕ = $(line.u[1][3]), initial μ = $(line.u[1][2]), θ displacement = $(μ_displacement[i]), ϕ displacement = $(ϕ_displacement[i])")
+		# end
+		# final μ = $(line.u[end][2]), difference = $(abs(abs(line.u[1][2]) - abs(line.u[end][2])))")
+	end
+end
+
+size(μ_displacement[μ_displacement .!= 0.0])
+
+Br_surf = Br1[end, :, :]
+sph_modes = sph_transform(Br_surf)
+
+sph_evaluate([0 0; 1 1.])
+
+n_μ * n_ϕ / 2
+
+
+
 # Convert entries when appropriate
 d["architecture"]["activation"] = getfield(Main, Symbol(d["architecture"]["activation"]))
 d["optimization"]["adam"]["optimizer"] = getfield(Main, Symbol(d["optimization"]["adam"]["optimizer"]))

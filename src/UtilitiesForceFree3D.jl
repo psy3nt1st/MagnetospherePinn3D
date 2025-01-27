@@ -100,3 +100,10 @@ function setup_configfile(job_dir)
 
    return config_file
 end
+
+
+function findnearest(A::AbstractArray,x) 
+   
+   return findmin(abs(A-x))
+end
+
