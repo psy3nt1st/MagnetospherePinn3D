@@ -1,5 +1,7 @@
-# Parameters for the neural network architecture
-[architecture]
+# ---------------------------------------------------------------------------- #
+#                Parameters for the neural network architecture                #
+# ---------------------------------------------------------------------------- #
+[architecture]                                        
 N_input = 4
 N_layers = 2
 N_neurons = 30
@@ -8,36 +10,46 @@ activation = "tanh"
 N_points = 20000
 rng_seed = 0
 
-# Parameters for the optimization process
-[optimization]
-N_sets = 10
-adam_sets = 2
+# ---------------------------------------------------------------------------- #
+#                    Parameters for the optimization process                   #
+# ---------------------------------------------------------------------------- #
+[optimization]                                        
+N_sets = 20
+adam_sets = 4
 adam_iters = 500
-quasiNewton_method = "SSBroyden" # "SSBroyden" or "SSBFGS" or "BFGS"
+quasiNewton_method = "SSBroyden"    # "SSBroyden" or "SSBFGS" or "BFGS"
 quasiNewton_iters = 500
-loss_function = "MSE" # "MSE" or "logMSE"
+loss_function = "MSE"               # "MSE" or "logMSE"
 
-# Parameters for the physical properties of the model
-[model]
-# Type of magnetosphere
-alpha_bc_mode = "hotspot" # "hotspot" or "double-hotspot" or "axisymmetric"
+# ---------------------------------------------------------------------------- #
+#              Parameters for the physical properties of the model             #
+# ---------------------------------------------------------------------------- #
+[model]                                               
 
-# Magnetic field
+# --------------------------- Type of magnetosphere -------------------------- #
+
+alpha_bc_mode = "hotspot"      # "hotspot" or "double-hotspot" or "axisymmetric"
+br_bc_mode = "axisymmetric"    # "axisymmetric" or "non axisymmetric"
+
+# -------------------------- Multipole Coefficients -------------------------- #
 coef = [1.0000e+00, 0.0000e+00, 0.0000e+00]
 
-# 3D magnetar with one pair of hotspots
-alpha0 = 0.0
+# ------------------- 3D magnetar with one pair of hotspots ------------------ #
+
+alpha0 = 2.8
 theta1 = 45.0
 phi1 = 180.0
 sigma = 0.2
 
-# 3D magnetar with two pairs of hotspots
+# ------------------ 3D magnetar with two pairs of hotspots ------------------ #
+
 alpha0_b = 1.5
 theta1_b = 45.0   
 phi1_b = 120.0
 sigma_b = 0.2
 
-# Axisymmetric magnetar
+# --------------------------- Axisymmetric magnetar -------------------------- #
+
 Pc = 0.3293455
 s = 2.0
 sigma_gs = 3.0
