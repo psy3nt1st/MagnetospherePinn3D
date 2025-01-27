@@ -114,10 +114,22 @@ function Br_surface(μ, ϕ, params)
 	
 	@unpack coef = params.model
 
-	# return @. coef[1] * 2 * μ + coef[2] * (3 * μ^2 - 1) + coef[3] * (5 * μ^3 - 3 * μ)
+	if hasproperty(params.model, :br_bc_mode)
+		
+		if params.model.br_bc_mode == "axisymmetric"
+			
+			return @. coef[1] * 2 * μ + coef[2] * (3 * μ^2 - 1) + coef[3] * (5 * μ^3 - 3 * μ)
+		
+		elseif params.model.br_bc_mode == "non axisymmetric"
+			
+			return @. 0.5 * coef[1] * 2 * μ - 0.5 * coef[1] * 2 * sin(μ) * cos(ϕ)
+		end
 
-	return @. 0.5 * coef[1] * 2 * μ - 0.5 * coef[1] * 2 * sin(μ) * cos(ϕ)
-
+	else
+		
+		return @. coef[1] * 2 * μ + coef[2] * (3 * μ^2 - 1) + coef[3] * (5 * μ^3 - 3 * μ)
+			
+	end
 end
 
 function α_surface(μ, ϕ, params)
@@ -170,13 +182,23 @@ end
 function α(q, μ, ϕ, Θ, st, Nα, params)
 
 	return @. q * $α_surface(μ, ϕ, params) + q * ((1 - q) + ($Br_surface(μ, ϕ, params) * ($Br_surface(μ, ϕ, params) < 0)) ^ 2) * Nα
-	# return @. q * $α_surface(μ, ϕ, params) + q * ((1 - q) + ($Br_surface(μ) * ($Br_surface(μ) < 0)) ^ 3) * Nα
+end
+
+function Bmag(q, μ, ϕ, Θ_trained, st, Nr, Nθ, Nϕ, params)
+	
+	return .√(Br(q, μ, ϕ, Θ_trained, st, Nr, params)[1].^2 .+ Bθ(q, μ, ϕ, Θ_trained, st, Nθ)[1].^2 .+ Bϕ(q, μ, ϕ, Θ_trained, st, Nϕ)[1].^2)
 end
 
 const ϵ = ∛(eps()) 
 # const ϵ2 = ∜(eps())
 
 function calculate_derivatives(q, μ, ϕ, Θ, st, NN, params)
+	
+	neuralnet = NN(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
+	Nr = reshape(neuralnet[1, :], size(q))
+	Nθ = reshape(neuralnet[2, :], size(q))
+	Nϕ = reshape(neuralnet[3, :], size(q))
+	Nα = reshape(neuralnet[4, :], size(q))
 
 	neuralnet_qplus = NN(vcat(q .+ ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
 	Nr_qplus = reshape(neuralnet_qplus[1, :], size(q))
@@ -225,9 +247,37 @@ function calculate_derivatives(q, μ, ϕ, Θ, st, NN, params)
             (Br(q, μ, ϕ .+ ϵ, Θ, st, Nr_ϕplus, params) .- Br(q, μ, ϕ .- ϵ, Θ, st, Nr_ϕminus, params)) ./ (2 .* ϵ),
             (Bθ(q, μ, ϕ .+ ϵ, Θ, st, Nθ_ϕplus) .- Bθ(q, μ, ϕ .- ϵ, Θ, st, Nθ_ϕminus)) ./ (2 .* ϵ),
             (Bϕ(q, μ, ϕ .+ ϵ, Θ, st, Nϕ_ϕplus) .- Bϕ(q, μ, ϕ .- ϵ, Θ, st, Nϕ_ϕminus)) ./ (2 .* ϵ),
-            (α(q, μ, ϕ .+ ϵ, Θ, st, Nα_ϕplus, params) .- α(q, μ, ϕ .- ϵ, Θ, st, Nα_ϕminus, params)) ./ (2 .* ϵ)
+            (α(q, μ, ϕ .+ ϵ, Θ, st, Nα_ϕplus, params) .- α(q, μ, ϕ .- ϵ, Θ, st, Nα_ϕminus, params)) ./ (2 .* ϵ),
+				(α(q .+ ϵ, μ, ϕ, Θ, st, Nα_qplus, params) .-2 .* α(q, μ, ϕ, Θ, st, Nα, params) .+ α(q .- ϵ, μ, ϕ, Θ, st, Nα_qminus, params)) ./ ϵ .^ 2,
+				(α(q, μ .+ ϵ, ϕ, Θ, st, Nα_μplus, params) .-2 .* α(q, μ, ϕ, Θ, st, Nα, params) .+ α(q, μ .- ϵ, ϕ, Θ, st, Nα_μminus, params)) ./ ϵ .^ 2,
+				(α(q, μ, ϕ .+ ϵ, Θ, st, Nα_ϕplus, params) .-2 .* α(q, μ, ϕ, Θ, st, Nα, params) .+ α(q, μ, ϕ .- ϵ, Θ, st, Nα_ϕminus, params)) ./ ϵ .^ 2
 		   )
 	
+end
+
+function grad(q, μ, df_dq, df_dμ, df_dϕ)
+
+	return @. -q^2 * df_dq, -q * √(1 - μ^2) * df_dμ, -q / √(1 - μ^2) * df_dϕ
+end
+
+function diver(q, μ, Br, Bθ, dBr_dq, dBθ_dμ, dBϕ_dϕ)
+
+	return @. 2 * q * Br - q^2 * dBr_dq - q * √(1 - μ^2) * dBθ_dμ + q * μ / √(1 - μ^2) * Bθ + q / √(1 - μ^2) * dBϕ_dϕ	
+end
+
+function curl(q, μ, Bθ, Bϕ, dBr_dμ, dBθ_dq, dBϕ_dμ)
+	
+	return @. q * μ / √(1 - μ^2) * Bϕ - q * √(1 - μ^2) * dBϕ_dμ - q / √(1 - μ^2) * dBθ_dϕ, q * Bθ - q^2 * dBθ_dq + q * √(1 - μ^2) * dBr_dμ, q * Bθ - q^2 * dBθ_dq + q * √(1 - μ^2) * dBr_dμ
+end
+
+function laplacian(q, μ, df_dμ, d2f_dq2, d2f_dμ2, d2f_dϕ2)
+
+	return @. q^4 * d2f_dq2 - 2 * q^2 * μ * df_dμ + q^2 * (1 - μ^2) * d2f_dμ2 + q^2 / (1 - μ^2) * d2f_dϕ2
+end
+
+function scalar_product(v1, v2, v3, u1, u2, u3)
+
+	return @. v1 * u1 + v2 * u2 + v3 * u3
 end
 
 function calculate_r_equation(q, μ, ϕ, Br, Bθ, Bϕ, α, dBr_dq, dBθ_dq, dBϕ_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ)
@@ -247,13 +297,45 @@ end
 
 function calculate_divergence(q, μ, ϕ,	Br, Bθ, Bϕ, dBr_dq, dBθ_dq, dBϕ_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ)
 
-	return @. 2 * q * Br - q^2 * dBr_dq - q * √(1 - μ^2) * dBθ_dμ + q * μ / √(1 - μ^2) * Bθ + q / √(1 - μ^2) * dBϕ_dϕ 
+	return @. 2 * q * Br - q^2 * dBr_dq - q * √(1 - μ^2) * dBθ_dμ + q * μ / √(1 - μ^2) * Bθ + q / √(1 - μ^2) * dBϕ_dϕ
 end
 
 function calculate_Bdotgradα(q, μ, ϕ, Br, Bθ, Bϕ, dα_dq, dα_dμ, dα_dϕ)
 
 	return @. -q^2 * Br * dα_dq - q * √(1 - μ^2) * Bθ * dα_dμ + q / √(1 - μ^2) * Bϕ * dα_dϕ
 end
+
+function calculate_gradB2(q, μ, Br, Bθ, Bϕ, dBr_dq, dBθ_dq, dBϕ_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ)
+
+	return @. (-q^2 * (Br * dBr_dq + Bθ * dBθ_dq + Bϕ * dBϕ_dq), 
+				 -q * √(1 - μ^2) * (Br * dBr_dμ + Bθ * dBθ_dμ + Bϕ * dBϕ_dμ), 
+				  q / √(1 - μ^2) * (Br * dBr_dϕ + Bθ * dBθ_dϕ + Bϕ * dBϕ_dϕ))
+end
+
+function calclulate_∂α_∂t(q, μ, ϕ, NN, Θ, st, ϵ)
+	NN = pinn(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ_trained, st)[1]
+	Nr = reshape(NN[1, :], size(q))
+	Nθ = reshape(NN[2, :], size(q))
+	Nϕ = reshape(NN[3, :], size(q))
+	Nα = reshape(NN[4, :], size(q))
+
+	Br1 = Br(q, μ, ϕ, Θ_trained, st, Nr, params)
+	Bθ1 = Bθ(q, μ, ϕ, Θ_trained, st, Nθ)
+	Bϕ1 = Bϕ(q, μ, ϕ, Θ_trained, st, Nϕ)
+	α1 = α(q, μ, ϕ, Θ_trained, st, Nα, params)
+	dBr_dq, dBθ_dq, dBϕ_dq, dα_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dα_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ, dα_dϕ, d2α_dq2, d2α_dμ2, d2α_dϕ2 = calculate_derivatives(q, μ, ϕ, Θ, st, NN, ϵ)
+
+	∇2α = laplacian(q, μ, dα_dμ, d2α_dq2, d2α_dμ2, d2α_dϕ2)
+	∇α = grad(q, μ, dα_dq, dα_dμ, dα_dϕ)
+	∇B2 = calculate_gradB2(q, μ, Br1, Bθ1, Bϕ1, dBr_dq, dBθ_dq, dBϕ_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ)
+	B2 = Br1^2 + Bθ1^2 + Bϕ1^2
+
+	da_dt = ∇2α + scalar_product(∇α..., ∇B2...) / B2
+
+	return 
+end
+
+
 
 function loss_function(input, Θ, st, NN, params)
 	# unpack input
@@ -262,7 +344,7 @@ function loss_function(input, Θ, st, NN, params)
 	ϕ = @view input[3:3,:]
 
 	# Calculate derivatives
-	dBr_dq, dBθ_dq, dBϕ_dq, dα_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dα_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ, dα_dϕ  = calculate_derivatives(q, μ, ϕ, Θ, st, NN, params)
+	dBr_dq, dBθ_dq, dBϕ_dq, dα_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dα_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ, dα_dϕ  = calculate_derivatives(q, μ, ϕ, Θ, st, NN, params)[1:12]
 	neuralnet = NN(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
 	Nr = reshape(neuralnet[1, :], size(q))
 	Nθ = reshape(neuralnet[2, :], size(q))
