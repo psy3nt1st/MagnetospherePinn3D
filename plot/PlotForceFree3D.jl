@@ -33,9 +33,9 @@ plot_magnetosphere_3d(fieldlines, α_surface)
 plot_magnetosphere_3d(fieldlines, α_surface_next)
 
 
-plot_surface_dα_dt(μ, ϕ, dα_dt)
-plot_surface_diffusive_term(μ, ϕ, diffusive_term)
-plot_surface_advective_term(μ, ϕ, advective_term)
+# plot_surface_dα_dt(μ, ϕ, dα_dt)
+# plot_surface_diffusive_term(μ, ϕ, diffusive_term)
+# plot_surface_advective_term(μ, ϕ, advective_term)
 
 
 function plot_surface_diffusive_advective_ratio(μ, ϕ, diffusive_term, advective_term)
@@ -70,7 +70,7 @@ function plot_surface_diffusive_advective_ratio(μ, ϕ, diffusive_term, advectiv
 end
 
 
-plot_surface_diffusive_advective_ratio(μ, ϕ, diffusive_term, advective_term)
+# plot_surface_diffusive_advective_ratio(μ, ϕ, diffusive_term, advective_term)
 
 
 minimum(dα_dt[end,2:end-2,:])

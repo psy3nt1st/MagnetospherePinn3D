@@ -25,7 +25,7 @@ params = import_params(joinpath(datadir, "config.toml"))
 # Create neural network
 pinn, _, st = create_neural_network(params)
 
-Θ_trained = load(joinpath(datadir,"trained_model.jld2"), "Θ_trained")
+Θ_trained = load(joinpath(datadir, "trained_model.jld2"), "Θ_trained")
 losses = load(joinpath(datadir, "losses_vs_iterations.jld2"), "losses")
 
 # Create test grid
