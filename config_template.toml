@@ -28,7 +28,7 @@ loss_function = "MSE"               # "MSE" or "logMSE"
 
 # --------------------------- Type of magnetosphere -------------------------- #
 
-alpha_bc_mode = "hotspot"      # "hotspot" or "double-hotspot" or "axisymmetric"
+alpha_bc_mode = "diffusive"      # "hotspot" or "double-hotspot" or "axisymmetric" or "diffusive"
 br_bc_mode = "axisymmetric"    # "axisymmetric" or "non axisymmetric"
 
 # -------------------------- Multipole Coefficients -------------------------- #
@@ -55,6 +55,10 @@ s = 2.0
 sigma_gs = 3.0
 use_rc = false
 rc = 3.6
+
+# ------------------------- Diffusive surface alpha -------------------------- #
+
+dt = 1e-3
 
 
 

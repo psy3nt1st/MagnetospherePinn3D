@@ -16,7 +16,6 @@ end
 	quasiNewton_method::String = "BFGS"
 	quasiNewton_iters::Int = 500
 	loss_function::String = "MSE"
-
 end
 
 @option "model" mutable struct ModelParams
@@ -36,6 +35,7 @@ end
 	sigma_gs::Float64 = 2.0
 	use_rc::Bool = false
 	rc::Float64 = 3.35
+	dt::Float64 = 1e-3
 end
 
 @option "Params" mutable struct Params
