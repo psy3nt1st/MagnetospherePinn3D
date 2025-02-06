@@ -16,14 +16,14 @@ dirs = filter(dir -> isdir(dir) && startswith(basename(dir), "ff3d") , readdir(a
 # datadir = joinpath(dirs[end-2], "24")
 # datadir = "../data/ff3d_3042596"
 # datadir = "../data/local_2024_10_29_16_39_46"
-datadir = dirs[end-2]
+datadir = dirs[end]
 # datadir = "../data/current_free_non_axisym/"
 @info "Using data in $datadir"
 
 params = import_params(joinpath(datadir, "config.toml"))
 
 # Create neural network
-pinn, _, st = create_neural_network(params)
+NN, _, st = create_neural_network(params)
 
 Θ_trained = load(joinpath(datadir, "trained_model.jld2"), "Θ_trained")
 losses = load(joinpath(datadir, "losses_vs_iterations.jld2"), "losses")
@@ -33,7 +33,7 @@ n_q = 160
 n_μ = 80
 n_ϕ = 160
 
-q, μ, ϕ, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α = create_test(n_q, n_μ, n_ϕ, pinn, Θ_trained, st, params, use_θ=true)[1:9]
+q, μ, ϕ, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α = create_test(n_q, n_μ, n_ϕ, NN, Θ_trained, st, params, use_θ=true)[1:9]
 # q, θ, ϕ, Br1, Bθ1, Bϕ1, α1, ∇B = read_gradrubin_data()[1:8]
 Bmag1 = .√(Br1.^2 .+ Bθ1.^2 .+ Bϕ1.^2)
 
@@ -42,7 +42,7 @@ y = @. sqrt(1 - μ^2) / q * sin(ϕ)
 z = @. μ / q 
 
 
-function calclulate_dα_dt(q, μ, ϕ, pinn, Θ, st, ϵ; use_θ = false)
+function calclulate_dα_dt(q, μ, ϕ, NN, Θ, st, ϵ; use_θ = false)
 	
 	n_μ = size(q)[2]
 	n_ϕ = size(q)[3]
@@ -86,26 +86,26 @@ function advance_α_timestep(q, μ, ϕ, pinn, Θ_trained, st, params; use_θ = f
 	return α_surface .+ dt .* dα_dt	
 end
 
-α_surface_next = advance_α_timestep(q, μ, ϕ, pinn, Θ_trained, st, params, use_θ = true, dt = 1e-3)
-α_surface_next = reshape(α_surface_next, n_μ, n_ϕ)
+# α_surface_next = advance_α_timestep(q, μ, ϕ, pinn, Θ_trained, st, params, use_θ = true, dt = 1e-3)
+# α_surface_next = reshape(α_surface_next, n_μ, n_ϕ)
 
-length(α_surface_next)
+# length(α_surface_next)
 
-dα_dt, diffusive_term, advective_term, α_surface = calclulate_dα_dt(q, μ, ϕ, pinn, Θ_trained, st, params, use_θ = true)
-dα_dt = reshape(dα_dt, n_μ, n_ϕ)
-diffusive_term = reshape(diffusive_term, n_μ, n_ϕ)
-advective_term = reshape(advective_term, n_μ, n_ϕ)
-α_surface = reshape(α_surface, n_μ, n_ϕ)
+# dα_dt, diffusive_term, advective_term, α_surface = calclulate_dα_dt(q, μ, ϕ, pinn, Θ_trained, st, params, use_θ = true)
+# dα_dt = reshape(dα_dt, n_μ, n_ϕ)
+# diffusive_term = reshape(diffusive_term, n_μ, n_ϕ)
+# advective_term = reshape(advective_term, n_μ, n_ϕ)
+# α_surface = reshape(α_surface, n_μ, n_ϕ)
 # println(size(da_dt))
 
 # Integrate fieldlines
 fieldlines=[]
 footprints = find_footprints(α1, Br1, μ, ϕ, α_thres = 0.0, Br1_thres = 0.0, μ_thres = 0.7)
-sol = integrate_fieldlines!(fieldlines, footprints, pinn, Θ_trained, st, params)
+sol = integrate_fieldlines!(fieldlines, footprints, NN, Θ_trained, st, params)
 println("Number of fieldlines = ", length(fieldlines))
 
 # Calculate energy
-energy = calculate_energy(pinn, Θ_trained, st, params)
+energy = calculate_energy(NN, Θ_trained, st, params)
 println("Energy = ", energy)
 
 # Calculate max Bϕ ratio

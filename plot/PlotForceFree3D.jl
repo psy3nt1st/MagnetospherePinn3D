@@ -10,8 +10,8 @@ using Parameters
 include("PlottingFunctions.jl")
 
 
-plot_surface_α(μ, ϕ, α_surface)
-plot_surface_α(μ, ϕ, α_surface_next)
+# plot_surface_α(μ, ϕ, α_surface)
+# plot_surface_α(μ, ϕ, α_surface_next)
 
 
 function plot_magnetosphere_3d(fieldlines, α_surface)
@@ -19,7 +19,7 @@ function plot_magnetosphere_3d(fieldlines, α_surface)
 	lscene = LScene(f[1,1])
 	star = mesh!(lscene, Sphere(Point3(0, 0, 0), 1.0)
 				 , color=abs.(α_surface), colormap=reverse(cgrad(:gist_heat, 100)), interpolate=true
-				#  , colorrange=(0, maximum(α1))
+				 , colorrange=(0, maximum(α_surface))
 				 )
 				#  , color=abs.(Br1[end, :, :]), colormap=reverse(cgrad(:gist_heat, 100)), interpolate=true, colorrange=(0, maximum(Br1)))
 	cbar = Colorbar(f[1, 2], star)
@@ -28,9 +28,9 @@ function plot_magnetosphere_3d(fieldlines, α_surface)
 	save(joinpath("figures", "fieldlines.png"), f, update=false)
 end
 
-# plot_surface_Br(μ, ϕ, Br1)
-plot_magnetosphere_3d(fieldlines, α_surface)
-plot_magnetosphere_3d(fieldlines, α_surface_next)
+plot_surface_Br(μ, ϕ, Br1)
+plot_magnetosphere_3d(fieldlines, α1[end, :, :])
+# plot_magnetosphere_3d(fieldlines, α_surface_next)
 
 
 # plot_surface_dα_dt(μ, ϕ, dα_dt)

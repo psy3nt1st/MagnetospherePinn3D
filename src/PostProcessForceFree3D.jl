@@ -1,4 +1,4 @@
-function create_test(n_q, n_μ, n_ϕ, pinn, Θ_trained, st, params; use_θ = false)
+function create_test(n_q, n_μ, n_ϕ, NN, Θ, st, params; use_θ = false)
 	
 	q = reshape([q for ϕ in range(0, 2π, n_ϕ) for μ in range(-1+1e-5, 1-1e-5, n_μ) for q in range(0, 1, n_q)], 1, :)
 	μ = reshape([μ for ϕ in range(0, 2π, n_ϕ) for μ in range(-1+1e-5, 1-1e-5, n_μ) for q in range(0, 1, n_q)], 1, :)
@@ -9,17 +9,22 @@ function create_test(n_q, n_μ, n_ϕ, pinn, Θ_trained, st, params; use_θ = fal
 		μ = cos.(θ)
 	end
 
-	NN = pinn(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ_trained, st)[1]
-	Nr = reshape(NN[1, :], size(q))
-	Nθ = reshape(NN[2, :], size(q))
-	Nϕ = reshape(NN[3, :], size(q))
-	Nα = reshape(NN[4, :], size(q))
+	# NN = pinn(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ_trained, st)[1]
+	# Nr = reshape(NN[1, :], size(q))
+	# Nθ = reshape(NN[2, :], size(q))
+	# Nϕ = reshape(NN[3, :], size(q))
+	# Nα = reshape(NN[4, :], size(q))
 
-	Br1 = Br(q, μ, ϕ, Θ_trained, st, Nr, params)
-	Bθ1 = Bθ(q, μ, ϕ, Θ_trained, st, Nθ)
-	Bϕ1 = Bϕ(q, μ, ϕ, Θ_trained, st, Nϕ)
-	α1 = α(q, μ, ϕ, Θ_trained, st, Nα, params)
-	dBr_dq, dBθ_dq, dBϕ_dq, dα_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dα_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ, dα_dϕ  = calculate_derivatives(q, μ, ϕ, Θ_trained, st, pinn, params)[1:12]
+    Nr = NN[1](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]
+	Nθ = NN[2](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net2, st[2])[1]
+	Nϕ = NN[3](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
+	Nα = NN[4](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net4, st[4])[1]
+
+	Br1 = Br(q, μ, ϕ, Θ, st, Nr, params)
+	Bθ1 = Bθ(q, μ, ϕ, Θ, st, Nθ)
+	Bϕ1 = Bϕ(q, μ, ϕ, Θ, st, Nϕ)
+	α1 = α(q, μ, ϕ, Θ, st, Nα, params)
+	dBr_dq, dBθ_dq, dBϕ_dq, dα_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dα_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ, dα_dϕ  = calculate_derivatives(q, μ, ϕ, Θ, st, NN, params)[1:12]
 	∇B = calculate_divergence(q, μ, ϕ, Br1, Bθ1, Bϕ1, dBr_dq, dBθ_dq, dBϕ_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ)
 	B∇α = calculate_Bdotgradα(q, μ, ϕ, Br1, Bθ1, Bϕ1, dα_dq, dα_dμ, dα_dϕ)
 
@@ -43,20 +48,24 @@ end
 function integrand(x, p)
 	# println(x)
 	q, μ, ϕ = x
-	pinn, Θ_trained, st, params = p
+	NN, Θ, st, params = p
 
-	NN = pinn(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ_trained, st)[1]
-	Nr = reshape(NN[1, :], size(q))
-	Nθ = reshape(NN[2, :], size(q))
-	Nϕ = reshape(NN[3, :], size(q))
+	# NN = pinn(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ_trained, st)[1]
+	# Nr = reshape(NN[1, :], size(q))
+	# Nθ = reshape(NN[2, :], size(q))
+	# Nϕ = reshape(NN[3, :], size(q))
 
-	return Bmag(q, μ, ϕ, Θ_trained, st, Nr, Nθ, Nϕ, params).^2 ./ q.^4 ./ (8π)
+    Nr = NN[1](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]
+    Nθ = NN[2](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net2, st[2])[1]
+    Nϕ = NN[3](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
+
+	return Bmag(q, μ, ϕ, Θ, st, Nr, Nθ, Nϕ, params).^2 ./ q.^4 ./ (8π)
 end
 
-function calculate_energy(pinn, Θ_trained, st, params)
+function calculate_energy(NN, Θ, st, params)
 	
 	domain = ([0.0, -1, 0], [1, 1, 2π])
-	p = (pinn, Θ_trained, st, params)
+	p = (NN, Θ, st, params)
 	prob = IntegralProblem(integrand, domain, p)
 
 	energy = solve(prob, HCubatureJL(), reltol = 1e-7, abstol = 1e-7)
@@ -83,23 +92,34 @@ function find_footprints(α1, Br1, μ, ϕ; α_thres = 0.0, Br1_thres = 0.0, μ_t
 end
 
 function field_line_equations!(du, u, p, t)
-   q, μ, ϕ = u
-   pinn, Θ_trained, st, params = p
-   # println("t = $t, q = $q, μ = $μ, ϕ = $ϕ")
-   
-   NN = pinn(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ_trained, st)[1]
-   Nr = reshape(NN[1, :], size(q))
-   Nθ = reshape(NN[2, :], size(q))
-   Nϕ = reshape(NN[3, :], size(q))
+    q, μ, ϕ = u
+    NN, Θ, st, params = p
+    # println("t = $t, q = $q, μ = $μ, ϕ = $ϕ")
+    
+    # NN = pinn(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ_trained, st)[1]
+    # Nr = reshape(NN[1, :], size(q))
+    # Nθ = reshape(NN[2, :], size(q))
+    # Nϕ = reshape(NN[3, :], size(q))
 
-	Br1 = Br(q, μ, ϕ, Θ_trained, st, Nr, params)
-	Bθ1 = Bθ(q, μ, ϕ, Θ_trained, st, Nθ)
-	Bϕ1 = Bϕ(q, μ, ϕ, Θ_trained, st, Nϕ)
+    Nr = NN[1](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]
+    Nθ = NN[2](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net2, st[2])[1]
+    Nϕ = NN[3](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
+    # Nα = NN[4](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net4, st[4])[1]
+
+    Nr = reshape(Nr, size(q))
+    Nθ = reshape(Nθ, size(q))
+    Nϕ = reshape(Nϕ, size(q))
+
+
+	Br1 = Br(q, μ, ϕ, Θ, st, Nr, params)
+	Bθ1 = Bθ(q, μ, ϕ, Θ, st, Nθ)
+	Bϕ1 = Bϕ(q, μ, ϕ, Θ, st, Nϕ)
 	B = @. √(Br1^2 + Bθ1^2 + Bϕ1^2)
 
-   du[1] = @. -q^2 * Br1 / B
-   du[2] = @. -q * √abs(1-μ^2) * Bθ1 / B
-   du[3] = @. q / √abs(1-μ^2) * Bϕ1 / B
+
+    du[1] = @. -q^2 * Br1 / B
+    du[2] = @. -q * √abs(1-μ^2) * Bθ1 / B
+    du[3] = @. q / √abs(1-μ^2) * Bϕ1 / B
 	
 end
 
@@ -116,7 +136,7 @@ function stop_at_negative_ϕ(u, t, integrator)
 	return u[3] - 0.0
 end
 
-function integrate_fieldlines!(fieldlines, footprints, pinn, Θ_trained, st, params)
+function integrate_fieldlines!(fieldlines, footprints, NN, Θ, st, params)
    
    affect!(integrator) = terminate!(integrator)
    cb1 = ContinuousCallback(stop_at_surface, affect!)
@@ -124,7 +144,7 @@ function integrate_fieldlines!(fieldlines, footprints, pinn, Θ_trained, st, par
    cb = CallbackSet(cb1, cb2)
 
    u0 = [1.0; 0.0; 0.0]
-   p = (pinn, Θ_trained, st, params)
+   p = (NN, Θ, st, params)
    tspan = (0.0, 50.0)
    prob = ODEProblem(field_line_equations!, u0, tspan, p)
 
