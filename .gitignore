@@ -27,3 +27,6 @@ slurm*.out
 
 # Scratch file for obsolete lines of code
 scratch.jl
+
+# Copy of driver script for fast testing
+src/ff3d_testing.jl
