@@ -49,6 +49,16 @@ function export_params(params, filename)
     
 end
 
+function create_subnet(N_input, N_neurons, N_layers, activation)
+	
+	return Chain(
+				 Dense(N_input, N_neurons, activation),
+				 [Dense(N_neurons, N_neurons, activation) for _ in 1:N_layers]...,
+				 Dense(N_neurons, 1)
+				)
+end
+
+
 function create_neural_network(params)
 
 	pa = params.architecture
@@ -76,18 +86,35 @@ function create_neural_network(params)
 		@warn "Invalid activation function: $(pa.activation). Using tanh."
 		activation = tanh
 	end
+	
+	NN = [create_subnet(pa.N_input, pa.N_neurons, pa.N_layers, activation) for _ in 1:pa.N_output]
 
-	# Create neural network
-	NN = Chain(
-               Dense(pa.N_input, pa.N_neurons, activation),
-               [Dense(pa.N_neurons, pa.N_neurons, activation) for _ in 1:pa.N_layers]...,
-               Dense(pa.N_neurons, pa.N_output)
-              )  
+    # Initialize parameters and state for each subnetwork, then move parameters to GPU and convert to Float64
+    subnet_params_states = [Lux.setup(rng, net) for net in NN]
+    
+    # Separate the parameters (Θ) and state (st)
+    Θ = [p[1] |> ComponentArray |> gpu_device() .|> Float64 for p in subnet_params_states]
 
-	# Move to gpu
-	Θ, st = Lux.setup(rng, NN)
-	Θ = Θ |> ComponentArray |> gpu_device() .|> Float64
+	Θ = ComponentArray(
+        net1 = Θ[1],
+        net2 = Θ[2],
+        net3 = Θ[3],
+        net4 = Θ[4],
+    )
+    st = [p[2] for p in subnet_params_states]
+    
 	return NN, Θ, st
+	# # Create neural network
+	# NN = Chain(
+    #            Dense(pa.N_input, pa.N_neurons, activation),
+    #            [Dense(pa.N_neurons, pa.N_neurons, activation) for _ in 1:pa.N_layers]...,
+    #            Dense(pa.N_neurons, pa.N_output)
+    #           )  
+
+	# # Move to gpu
+	# Θ, st = Lux.setup(rng, NN)
+	# Θ = Θ |> ComponentArray |> gpu_device() .|> Float64
+	# return NN, Θ, st
 
 end
 
@@ -158,7 +185,7 @@ function α_surface(μ, ϕ, params)
 		return @. α0 * exp((-(acos(μ) - θ1)^2 - (ϕ - ϕ1)^2) / (2 * σ^2)) + α0_b * exp((-(acos(μ) - θ1_b)^2 - (ϕ - ϕ1_b)^2) / (2 * σ_b^2))
 
 	else
-		@warn "Invalid alpha_bc_mode: $(params.model.alpha_bc_mode). Using zero α"
+		# @warn "Invalid alpha_bc_mode: $(params.model.alpha_bc_mode). Using zero α"
 		
 		return @. 0
 	end
@@ -193,48 +220,84 @@ const ϵ = ∛(eps())
 # const ϵ2 = ∜(eps())
 
 function calculate_derivatives(q, μ, ϕ, Θ, st, NN, params)
+
+	# neuralnet = NN(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
+	# Nr = reshape(neuralnet[1, :], size(q))
+	# Nθ = reshape(neuralnet[2, :], size(q))
+	# Nϕ = reshape(neuralnet[3, :], size(q))
+	# Nα = reshape(neuralnet[4, :], size(q))
+
+	Nr = NN[1](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]
+	Nθ = NN[2](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net2, st[2])[1]
+	Nϕ = NN[3](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
+	Nα = NN[4](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net4, st[4])[1]
+
+	# neuralnet_qplus = NN(vcat(q .+ ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
+	# Nr_qplus = reshape(neuralnet_qplus[1, :], size(q))
+	# Nθ_qplus = reshape(neuralnet_qplus[2, :], size(q))
+	# Nϕ_qplus = reshape(neuralnet_qplus[3, :], size(q))
+	# Nα_qplus = reshape(neuralnet_qplus[4, :], size(q))
+
+	Nr_qplus = NN[1](vcat(q .+ ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]
+	Nθ_qplus = NN[2](vcat(q .+ ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net2, st[2])[1]
+	Nϕ_qplus = NN[3](vcat(q .+ ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
+	Nα_qplus = NN[4](vcat(q .+ ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net4, st[4])[1]
+
+	# neuralnet_qminus = NN(vcat(q .- ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
+	# Nr_qminus = reshape(neuralnet_qminus[1, :], size(q))
+	# Nθ_qminus = reshape(neuralnet_qminus[2, :], size(q))
+	# Nϕ_qminus = reshape(neuralnet_qminus[3, :], size(q))
+	# Nα_qminus = reshape(neuralnet_qminus[4, :], size(q))
+
+	Nr_qminus = NN[1](vcat(q .- ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]
+	Nθ_qminus = NN[2](vcat(q .- ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net2, st[2])[1]
+	Nϕ_qminus = NN[3](vcat(q .- ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
+	Nα_qminus = NN[4](vcat(q .- ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net4, st[4])[1]
+
+	# neuralnet_μplus = NN(vcat(q, μ .+ ϵ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
+	# Nr_μplus = reshape(neuralnet_μplus[1, :], size(q))
+	# Nθ_μplus = reshape(neuralnet_μplus[2, :], size(q))
+	# Nϕ_μplus = reshape(neuralnet_μplus[3, :], size(q))
+	# Nα_μplus = reshape(neuralnet_μplus[4, :], size(q))
+
+	Nr_μplus = NN[1](vcat(q, μ .+ ϵ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]
+	Nθ_μplus = NN[2](vcat(q, μ .+ ϵ, cos.(ϕ), sin.(ϕ)), Θ.net2, st[2])[1]
+	Nϕ_μplus = NN[3](vcat(q, μ .+ ϵ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
+	Nα_μplus = NN[4](vcat(q, μ .+ ϵ, cos.(ϕ), sin.(ϕ)), Θ.net4, st[4])[1]
+
+	# neuralnet_μminus = NN(vcat(q, μ .- ϵ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
+	# Nr_μminus = reshape(neuralnet_μminus[1, :], size(q))
+	# Nθ_μminus = reshape(neuralnet_μminus[2, :], size(q))
+	# Nϕ_μminus = reshape(neuralnet_μminus[3, :], size(q))
+	# Nα_μminus = reshape(neuralnet_μminus[4, :], size(q))
+
+	Nr_μminus = NN[1](vcat(q, μ .- ϵ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]
+	Nθ_μminus = NN[2](vcat(q, μ .- ϵ, cos.(ϕ), sin.(ϕ)), Θ.net2, st[2])[1]
+	Nϕ_μminus = NN[3](vcat(q, μ .- ϵ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
+	Nα_μminus = NN[4](vcat(q, μ .- ϵ, cos.(ϕ), sin.(ϕ)), Θ.net4, st[4])[1]
+
+	# neuralnet_ϕplus = NN(vcat(q, μ, cos.(ϕ .+ ϵ), sin.(ϕ .+ ϵ)), Θ, st)[1]
+	# Nr_ϕplus = reshape(neuralnet_ϕplus[1, :], size(q))
+	# Nθ_ϕplus = reshape(neuralnet_ϕplus[2, :], size(q))
+	# Nϕ_ϕplus = reshape(neuralnet_ϕplus[3, :], size(q))
+	# Nα_ϕplus = reshape(neuralnet_ϕplus[4, :], size(q))
+
+	Nr_ϕplus = NN[1](vcat(q, μ, cos.(ϕ .+ ϵ), sin.(ϕ .+ ϵ)), Θ.net1, st[1])[1]
+	Nθ_ϕplus = NN[2](vcat(q, μ, cos.(ϕ .+ ϵ), sin.(ϕ .+ ϵ)), Θ.net2, st[2])[1]
+	Nϕ_ϕplus = NN[3](vcat(q, μ, cos.(ϕ .+ ϵ), sin.(ϕ .+ ϵ)), Θ.net3, st[3])[1]
+	Nα_ϕplus = NN[4](vcat(q, μ, cos.(ϕ .+ ϵ), sin.(ϕ .+ ϵ)), Θ.net4, st[4])[1]
+
+	# neuralnet_ϕminus = NN(vcat(q, μ, cos.(ϕ .- ϵ), sin.(ϕ .- ϵ)), Θ, st)[1]
+	# Nr_ϕminus = reshape(neuralnet_ϕminus[1, :], size(q))
+	# Nθ_ϕminus = reshape(neuralnet_ϕminus[2, :], size(q))
+	# Nϕ_ϕminus = reshape(neuralnet_ϕminus[3, :], size(q))
+	# Nα_ϕminus = reshape(neuralnet_ϕminus[4, :], size(q))
+
+	Nr_ϕminus = NN[1](vcat(q, μ, cos.(ϕ .- ϵ), sin.(ϕ .- ϵ)), Θ.net1, st[1])[1]
+	Nθ_ϕminus = NN[2](vcat(q, μ, cos.(ϕ .- ϵ), sin.(ϕ .- ϵ)), Θ.net2, st[2])[1]
+	Nϕ_ϕminus = NN[3](vcat(q, μ, cos.(ϕ .- ϵ), sin.(ϕ .- ϵ)), Θ.net3, st[3])[1]
+	Nα_ϕminus = NN[4](vcat(q, μ, cos.(ϕ .- ϵ), sin.(ϕ .- ϵ)), Θ.net4, st[4])[1]
 	
-	neuralnet = NN(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
-	Nr = reshape(neuralnet[1, :], size(q))
-	Nθ = reshape(neuralnet[2, :], size(q))
-	Nϕ = reshape(neuralnet[3, :], size(q))
-	Nα = reshape(neuralnet[4, :], size(q))
-
-	neuralnet_qplus = NN(vcat(q .+ ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
-	Nr_qplus = reshape(neuralnet_qplus[1, :], size(q))
-	Nθ_qplus = reshape(neuralnet_qplus[2, :], size(q))
-	Nϕ_qplus = reshape(neuralnet_qplus[3, :], size(q))
-	Nα_qplus = reshape(neuralnet_qplus[4, :], size(q))
-
-	neuralnet_qminus = NN(vcat(q .- ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
-	Nr_qminus = reshape(neuralnet_qminus[1, :], size(q))
-	Nθ_qminus = reshape(neuralnet_qminus[2, :], size(q))
-	Nϕ_qminus = reshape(neuralnet_qminus[3, :], size(q))
-	Nα_qminus = reshape(neuralnet_qminus[4, :], size(q))
-
-	neuralnet_μplus = NN(vcat(q, μ .+ ϵ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
-	Nr_μplus = reshape(neuralnet_μplus[1, :], size(q))
-	Nθ_μplus = reshape(neuralnet_μplus[2, :], size(q))
-	Nϕ_μplus = reshape(neuralnet_μplus[3, :], size(q))
-	Nα_μplus = reshape(neuralnet_μplus[4, :], size(q))
-
-	neuralnet_μminus = NN(vcat(q, μ .- ϵ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
-	Nr_μminus = reshape(neuralnet_μminus[1, :], size(q))
-	Nθ_μminus = reshape(neuralnet_μminus[2, :], size(q))
-	Nϕ_μminus = reshape(neuralnet_μminus[3, :], size(q))
-	Nα_μminus = reshape(neuralnet_μminus[4, :], size(q))
-
-	neuralnet_ϕplus = NN(vcat(q, μ, cos.(ϕ .+ ϵ), sin.(ϕ .+ ϵ)), Θ, st)[1]
-	Nr_ϕplus = reshape(neuralnet_ϕplus[1, :], size(q))
-	Nθ_ϕplus = reshape(neuralnet_ϕplus[2, :], size(q))
-	Nϕ_ϕplus = reshape(neuralnet_ϕplus[3, :], size(q))
-	Nα_ϕplus = reshape(neuralnet_ϕplus[4, :], size(q))
-
-	neuralnet_ϕminus = NN(vcat(q, μ, cos.(ϕ .- ϵ), sin.(ϕ .- ϵ)), Θ, st)[1]
-	Nr_ϕminus = reshape(neuralnet_ϕminus[1, :], size(q))
-	Nθ_ϕminus = reshape(neuralnet_ϕminus[2, :], size(q))
-	Nϕ_ϕminus = reshape(neuralnet_ϕminus[3, :], size(q))
-	Nα_ϕminus = reshape(neuralnet_ϕminus[4, :], size(q))
 
 	return ((Br(q .+ ϵ, μ, ϕ, Θ, st, Nr_qplus, params) .- Br(q .- ϵ, μ, ϕ, Θ, st, Nr_qminus, params)) ./ (2 .* ϵ),
             (Bθ(q .+ ϵ, μ, ϕ, Θ, st, Nθ_qplus) .- Bθ(q .- ϵ, μ, ϕ, Θ, st, Nθ_qminus)) ./ (2 .* ϵ),
@@ -345,11 +408,16 @@ function loss_function(input, Θ, st, NN, params)
 
 	# Calculate derivatives
 	dBr_dq, dBθ_dq, dBϕ_dq, dα_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dα_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ, dα_dϕ  = calculate_derivatives(q, μ, ϕ, Θ, st, NN, params)[1:12]
-	neuralnet = NN(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
-	Nr = reshape(neuralnet[1, :], size(q))
-	Nθ = reshape(neuralnet[2, :], size(q))
-	Nϕ = reshape(neuralnet[3, :], size(q))
-	Nα = reshape(neuralnet[4, :], size(q))
+	# neuralnet = NN(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
+	# Nr = reshape(neuralnet[1, :], size(q))
+	# Nθ = reshape(neuralnet[2, :], size(q))
+	# Nϕ = reshape(neuralnet[3, :], size(q))
+	# Nα = reshape(neuralnet[4, :], size(q))
+
+	Nr = NN[1](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]
+	Nθ = NN[2](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net2, st[2])[1]
+	Nϕ = NN[3](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
+	Nα = NN[4](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net4, st[4])[1]
 
 	Br1 = Br(q, μ, ϕ, Θ, st, Nr, params)
 	Bθ1 = Bθ(q, μ, ϕ, Θ, st, Nθ)
