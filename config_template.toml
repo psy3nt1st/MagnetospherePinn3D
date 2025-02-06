@@ -3,7 +3,7 @@
 # ---------------------------------------------------------------------------- #
 [architecture]                                    
 N_input = 4
-N_layers = 2
+N_layers = 3
 N_neurons = 30
 N_output = 4
 activation = "tanh"
@@ -28,7 +28,7 @@ loss_function = "MSE"               # "MSE" or "logMSE"
 
 # --------------------------- Type of magnetosphere -------------------------- #
 
-alpha_bc_mode = "diffusive"      # "hotspot" or "double-hotspot" or "axisymmetric" or "diffusive"
+alpha_bc_mode = "hotspot"      # "hotspot" or "double-hotspot" or "axisymmetric" or "diffusive"
 br_bc_mode = "axisymmetric"    # "axisymmetric" or "non axisymmetric"
 
 # -------------------------- Multipole Coefficients -------------------------- #
