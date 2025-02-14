@@ -494,7 +494,7 @@ end
 function setup_optprob(Θ, st, NN, params)
 
 	input = generate_input(params)
-	optf = Optimization.OptimizationFunction((Θ, input) -> loss_function(input, Θ, st, NN, params), Optimization.AutoEnzyme())
+	optf = Optimization.OptimizationFunction((Θ, input) -> loss_function(input, Θ, st, NN, params), Optimization.AutoZygote())
 	optprob = Optimization.OptimizationProblem(optf, Θ, input)
 	result = Optimization.solve(optprob, Adam(), maxiters = 1)
 
