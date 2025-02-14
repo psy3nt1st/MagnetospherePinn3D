@@ -227,9 +227,9 @@ function calculate_derivatives(q, μ, ϕ, Θ, st, NN, params)
 	# Nϕ = reshape(neuralnet[3, :], size(q))
 	# Nα = reshape(neuralnet[4, :], size(q))
 
-	Nr = NN[1](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]
-	Nθ = NN[2](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net2, st[2])[1]
-	Nϕ = NN[3](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
+	# Nr = NN[1](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]
+	# Nθ = NN[2](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net2, st[2])[1]
+	# Nϕ = NN[3](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
 	Nα = NN[4](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net4, st[4])[1]
 
 	# neuralnet_qplus = NN(vcat(q .+ ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
@@ -253,6 +253,19 @@ function calculate_derivatives(q, μ, ϕ, Θ, st, NN, params)
 	Nθ_qminus = NN[2](vcat(q .- ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net2, st[2])[1]
 	Nϕ_qminus = NN[3](vcat(q .- ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
 	Nα_qminus = NN[4](vcat(q .- ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net4, st[4])[1]
+
+    ∂Nr_∂q_fd = (Nr_qplus - Nr_qminus) ./ (2 * ϵ)
+
+    println("Calculating Zygote gradient")
+    # sNN = StatefulLuxLayer(NN[1], Θ.net1, st[1])
+    # ∂Nr_∂q_ad = Zygote.gradient(Base.Fix1(sum, identity) ∘ sNN, vcat(q, μ, cos.(ϕ), sin.(ϕ)))[1][1:1, :]
+    # ∂Nr_∂q_ad = Zygote.gradient(q -> sum(sNN(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]), q)[1]
+    # ∂Nr_∂q_ad = grad_input[1:1, :]
+    # println(size(∂Nr_∂q_ad))
+
+    # println(size(∂Nr_∂q_fd), " ", size(∂Nr_∂q_ad), " ", size(q), length(∂Nr_∂q_fd), " ", length(∂Nr_∂q_ad), " ", length(q))
+    # println(sum(abs2, ∂Nr_∂q_fd .- ∂Nr_∂q_ad))
+    # println(∂Nr_∂q_fd[1:10], "\n", ∂Nr_∂q_ad[1:10], "\n", abs.(∂Nr_∂q_fd[1:10] .- ∂Nr_∂q_ad[1:10]))
 
 	# neuralnet_μplus = NN(vcat(q, μ .+ ϵ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
 	# Nr_μplus = reshape(neuralnet_μplus[1, :], size(q))
@@ -311,9 +324,9 @@ function calculate_derivatives(q, μ, ϕ, Θ, st, NN, params)
             (Bθ(q, μ, ϕ .+ ϵ, Θ, st, Nθ_ϕplus) .- Bθ(q, μ, ϕ .- ϵ, Θ, st, Nθ_ϕminus)) ./ (2 .* ϵ),
             (Bϕ(q, μ, ϕ .+ ϵ, Θ, st, Nϕ_ϕplus) .- Bϕ(q, μ, ϕ .- ϵ, Θ, st, Nϕ_ϕminus)) ./ (2 .* ϵ),
             (α(q, μ, ϕ .+ ϵ, Θ, st, Nα_ϕplus, params) .- α(q, μ, ϕ .- ϵ, Θ, st, Nα_ϕminus, params)) ./ (2 .* ϵ),
-				(α(q .+ ϵ, μ, ϕ, Θ, st, Nα_qplus, params) .-2 .* α(q, μ, ϕ, Θ, st, Nα, params) .+ α(q .- ϵ, μ, ϕ, Θ, st, Nα_qminus, params)) ./ ϵ .^ 2,
-				(α(q, μ .+ ϵ, ϕ, Θ, st, Nα_μplus, params) .-2 .* α(q, μ, ϕ, Θ, st, Nα, params) .+ α(q, μ .- ϵ, ϕ, Θ, st, Nα_μminus, params)) ./ ϵ .^ 2,
-				(α(q, μ, ϕ .+ ϵ, Θ, st, Nα_ϕplus, params) .-2 .* α(q, μ, ϕ, Θ, st, Nα, params) .+ α(q, μ, ϕ .- ϵ, Θ, st, Nα_ϕminus, params)) ./ ϵ .^ 2
+            (α(q .+ ϵ, μ, ϕ, Θ, st, Nα_qplus, params) .-2 .* α(q, μ, ϕ, Θ, st, Nα, params) .+ α(q .- ϵ, μ, ϕ, Θ, st, Nα_qminus, params)) ./ ϵ .^ 2,
+            (α(q, μ .+ ϵ, ϕ, Θ, st, Nα_μplus, params) .-2 .* α(q, μ, ϕ, Θ, st, Nα, params) .+ α(q, μ .- ϵ, ϕ, Θ, st, Nα_μminus, params)) ./ ϵ .^ 2,
+            (α(q, μ, ϕ .+ ϵ, Θ, st, Nα_ϕplus, params) .-2 .* α(q, μ, ϕ, Θ, st, Nα, params) .+ α(q, μ, ϕ .- ϵ, Θ, st, Nα_ϕminus, params)) ./ ϵ .^ 2
 		   )
 	
 end
@@ -481,7 +494,7 @@ end
 function setup_optprob(Θ, st, NN, params)
 
 	input = generate_input(params)
-	optf = Optimization.OptimizationFunction((Θ, input) -> loss_function(input, Θ, st, NN, params), Optimization.AutoZygote())
+	optf = Optimization.OptimizationFunction((Θ, input) -> loss_function(input, Θ, st, NN, params), Optimization.AutoEnzyme())
 	optprob = Optimization.OptimizationProblem(optf, Θ, input)
 	result = Optimization.solve(optprob, Adam(), maxiters = 1)
 

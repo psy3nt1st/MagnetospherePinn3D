@@ -15,10 +15,13 @@ NN, Θ, st = create_neural_network(params)
 invH = Base.RefValue{AbstractArray{Float64, 2}}()
 losses = [Float64[] for _ in 1:6]
 
+@info "Setting up optimization problem"
 optprob, result = setup_optprob(Θ, st, NN, params)
 
+@info "Training neural network"
 result = train_neural_network!(result, optprob, losses, invH, job_dir, params)
 
+@info "Saving trained model"
 Θ_trained = result.u |> Lux.cpu_device()
 
 @save joinpath(job_dir, "trained_model.jld2") Θ_trained

@@ -10,8 +10,8 @@ using NaturalSort
 # Get path to data directory
 dirs = filter(dir -> isdir(dir) && startswith(basename(dir), "ff3d") , readdir(abspath("../data"); join=true))
 # dirs = filter(dir -> isdir(dir) && startswith(basename(dir), "local") , readdir(abspath("../data"); join=true))
-# datadir = dirs[end]
-datadir = "../data/current_free"
+datadir = dirs[end]
+# datadir = "../data/current_free"
 # datadir = "../data/ff3d_2762241"
 # datadir = "data/local_2024_07_25_13_37_33"
 @info "Using data in $datadir"

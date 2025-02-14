@@ -30,3 +30,6 @@ scratch.jl
 
 # Copy of driver script for fast testing
 src/ff3d_testing.jl
+
+# Safety copies
+*_bkp*

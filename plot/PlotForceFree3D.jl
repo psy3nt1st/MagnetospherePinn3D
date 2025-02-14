@@ -23,7 +23,7 @@ function plot_magnetosphere_3d(fieldlines, α_surface)
 				 )
 				#  , color=abs.(Br1[end, :, :]), colormap=reverse(cgrad(:gist_heat, 100)), interpolate=true, colorrange=(0, maximum(Br1)))
 	cbar = Colorbar(f[1, 2], star)
-	# plot_fieldlines(fieldlines, lscene)
+	plot_fieldlines(fieldlines, lscene)
 	display(GLMakie.Screen(), f)
 	save(joinpath("figures", "fieldlines.png"), f, update=false)
 end
@@ -71,10 +71,3 @@ end
 
 
 # plot_surface_diffusive_advective_ratio(μ, ϕ, diffusive_term, advective_term)
-
-
-minimum(dα_dt[end,2:end-2,:])
-maximum(dα_dt[end,2:end-2,:])
-
-minimum(advective_term[end,2:end-2,:])
-maximum(advective_term[end,2:end-2,:])
