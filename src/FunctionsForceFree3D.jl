@@ -74,10 +74,6 @@ function create_neural_network(params)
 		@warn "Invalid RNG seed: $(pa.rng_seed). Setting seed to 0"
 		Random.seed!(rng, 0)
 	end
-
-	# Check that all hyperparameters are positive
-	@assert pa.N_input > 0 && pa.N_output > 0 && pa.N_layers > 0 && pa.N_neurons > 0 "All hyperparameters must be positive."
-	@assert pa.N_layers > 0 "Must have at least one hidden layer."
 	
 	# Set activation function
 	if pa.activation == "tanh"
@@ -87,34 +83,13 @@ function create_neural_network(params)
 		activation = tanh
 	end
 	
-	NN = [create_subnet(pa.N_input, pa.N_neurons, pa.N_layers, activation) for _ in 1:pa.N_output]
-
-    # Initialize parameters and state for each subnetwork, then move parameters to GPU and convert to Float64
-    subnet_params_states = [Lux.setup(rng, net) for net in NN]
+    # Create neural network. Separate subnetworks for each output
+	subnetworks = [create_subnet(pa.N_input, pa.N_neurons, pa.N_layers, activation) for _ in 1:pa.N_output]
+    NN = Chain(Parallel(vcat, subnetworks...))
+    Θ, st = Lux.setup(rng, NN)
+    Θ = Θ |> ComponentArray |> gpu_device() .|> Float64
     
-    # Separate the parameters (Θ) and state (st)
-    Θ = [p[1] |> ComponentArray |> gpu_device() .|> Float64 for p in subnet_params_states]
-
-	Θ = ComponentArray(
-        net1 = Θ[1],
-        net2 = Θ[2],
-        net3 = Θ[3],
-        net4 = Θ[4],
-    )
-    st = [p[2] for p in subnet_params_states]
-    
-	return NN, Θ, st
-	# # Create neural network
-	# NN = Chain(
-    #            Dense(pa.N_input, pa.N_neurons, activation),
-    #            [Dense(pa.N_neurons, pa.N_neurons, activation) for _ in 1:pa.N_layers]...,
-    #            Dense(pa.N_neurons, pa.N_output)
-    #           )  
-
-	# # Move to gpu
-	# Θ, st = Lux.setup(rng, NN)
-	# Θ = Θ |> ComponentArray |> gpu_device() .|> Float64
-	# return NN, Θ, st
+    return NN, Θ, st
 
 end
 
@@ -124,10 +99,8 @@ function generate_input(params)
 	q = rand(Uniform(0.05, 1), (1, params.architecture.N_points))# |> gpu_device() .|> Float64
 	μ = rand(Uniform(-1, 1), (1, params.architecture.N_points))# |> gpu_device() .|> Float64
 	ϕ = rand(Uniform(0, 2π), (1, params.architecture.N_points))# |> gpu_device() .|> Float64
-
 	
-
-	input = vcat(q, μ, ϕ) |> gpu_device() .|> Float64
+	input = vcat(q, μ, ϕ, t) |> gpu_device() .|> Float64
 
 	return input
 end
@@ -183,6 +156,9 @@ function α_surface(μ, ϕ, params)
 		α0_b, θ1_b, ϕ1_b, σ_b = params.model.alpha0_b, params.model.theta1_b * π / 180, params.model.phi1_b * π / 180, params.model.sigma_b
 
 		return @. α0 * exp((-(acos(μ) - θ1)^2 - (ϕ - ϕ1)^2) / (2 * σ^2)) + α0_b * exp((-(acos(μ) - θ1_b)^2 - (ϕ - ϕ1_b)^2) / (2 * σ_b^2))
+    
+    elseif params.model.alpha_bc_mode == "diffusive"
+
 
 	else
 		# @warn "Invalid alpha_bc_mode: $(params.model.alpha_bc_mode). Using zero α"
@@ -219,98 +195,28 @@ end
 const ϵ = ∛(eps()) 
 # const ϵ2 = ∜(eps())
 
+function evaluate_subnetworks(q, μ, ϕ, Θ, st, NN, )
+
+    subnet_r, subnet_θ, subnet_ϕ, subnet_α = NN.layers
+
+    Nr = subnet_r(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.layer_1, st.layer_1)[1]
+    Nθ = subnet_θ(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.layer_2, st.layer_2)[1]
+    Nϕ = subnet_ϕ(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.layer_3, st.layer_3)[1]
+    Nα = subnet_α(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.layer_4, st.layer_4)[1]
+
+    return Nr, Nθ, Nϕ, Nα
+    
+end
+
 function calculate_derivatives(q, μ, ϕ, Θ, st, NN, params)
 
-	# neuralnet = NN(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
-	# Nr = reshape(neuralnet[1, :], size(q))
-	# Nθ = reshape(neuralnet[2, :], size(q))
-	# Nϕ = reshape(neuralnet[3, :], size(q))
-	# Nα = reshape(neuralnet[4, :], size(q))
-
-	# Nr = NN[1](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]
-	# Nθ = NN[2](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net2, st[2])[1]
-	# Nϕ = NN[3](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
-	Nα = NN[4](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net4, st[4])[1]
-
-	# neuralnet_qplus = NN(vcat(q .+ ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
-	# Nr_qplus = reshape(neuralnet_qplus[1, :], size(q))
-	# Nθ_qplus = reshape(neuralnet_qplus[2, :], size(q))
-	# Nϕ_qplus = reshape(neuralnet_qplus[3, :], size(q))
-	# Nα_qplus = reshape(neuralnet_qplus[4, :], size(q))
-
-	Nr_qplus = NN[1](vcat(q .+ ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]
-	Nθ_qplus = NN[2](vcat(q .+ ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net2, st[2])[1]
-	Nϕ_qplus = NN[3](vcat(q .+ ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
-	Nα_qplus = NN[4](vcat(q .+ ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net4, st[4])[1]
-
-	# neuralnet_qminus = NN(vcat(q .- ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
-	# Nr_qminus = reshape(neuralnet_qminus[1, :], size(q))
-	# Nθ_qminus = reshape(neuralnet_qminus[2, :], size(q))
-	# Nϕ_qminus = reshape(neuralnet_qminus[3, :], size(q))
-	# Nα_qminus = reshape(neuralnet_qminus[4, :], size(q))
-
-	Nr_qminus = NN[1](vcat(q .- ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]
-	Nθ_qminus = NN[2](vcat(q .- ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net2, st[2])[1]
-	Nϕ_qminus = NN[3](vcat(q .- ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
-	Nα_qminus = NN[4](vcat(q .- ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net4, st[4])[1]
-
-    ∂Nr_∂q_fd = (Nr_qplus - Nr_qminus) ./ (2 * ϵ)
-
-    println("Calculating Zygote gradient")
-    # sNN = StatefulLuxLayer(NN[1], Θ.net1, st[1])
-    # ∂Nr_∂q_ad = Zygote.gradient(Base.Fix1(sum, identity) ∘ sNN, vcat(q, μ, cos.(ϕ), sin.(ϕ)))[1][1:1, :]
-    # ∂Nr_∂q_ad = Zygote.gradient(q -> sum(sNN(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]), q)[1]
-    # ∂Nr_∂q_ad = grad_input[1:1, :]
-    # println(size(∂Nr_∂q_ad))
-
-    # println(size(∂Nr_∂q_fd), " ", size(∂Nr_∂q_ad), " ", size(q), length(∂Nr_∂q_fd), " ", length(∂Nr_∂q_ad), " ", length(q))
-    # println(sum(abs2, ∂Nr_∂q_fd .- ∂Nr_∂q_ad))
-    # println(∂Nr_∂q_fd[1:10], "\n", ∂Nr_∂q_ad[1:10], "\n", abs.(∂Nr_∂q_fd[1:10] .- ∂Nr_∂q_ad[1:10]))
-
-	# neuralnet_μplus = NN(vcat(q, μ .+ ϵ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
-	# Nr_μplus = reshape(neuralnet_μplus[1, :], size(q))
-	# Nθ_μplus = reshape(neuralnet_μplus[2, :], size(q))
-	# Nϕ_μplus = reshape(neuralnet_μplus[3, :], size(q))
-	# Nα_μplus = reshape(neuralnet_μplus[4, :], size(q))
-
-	Nr_μplus = NN[1](vcat(q, μ .+ ϵ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]
-	Nθ_μplus = NN[2](vcat(q, μ .+ ϵ, cos.(ϕ), sin.(ϕ)), Θ.net2, st[2])[1]
-	Nϕ_μplus = NN[3](vcat(q, μ .+ ϵ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
-	Nα_μplus = NN[4](vcat(q, μ .+ ϵ, cos.(ϕ), sin.(ϕ)), Θ.net4, st[4])[1]
-
-	# neuralnet_μminus = NN(vcat(q, μ .- ϵ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
-	# Nr_μminus = reshape(neuralnet_μminus[1, :], size(q))
-	# Nθ_μminus = reshape(neuralnet_μminus[2, :], size(q))
-	# Nϕ_μminus = reshape(neuralnet_μminus[3, :], size(q))
-	# Nα_μminus = reshape(neuralnet_μminus[4, :], size(q))
-
-	Nr_μminus = NN[1](vcat(q, μ .- ϵ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]
-	Nθ_μminus = NN[2](vcat(q, μ .- ϵ, cos.(ϕ), sin.(ϕ)), Θ.net2, st[2])[1]
-	Nϕ_μminus = NN[3](vcat(q, μ .- ϵ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
-	Nα_μminus = NN[4](vcat(q, μ .- ϵ, cos.(ϕ), sin.(ϕ)), Θ.net4, st[4])[1]
-
-	# neuralnet_ϕplus = NN(vcat(q, μ, cos.(ϕ .+ ϵ), sin.(ϕ .+ ϵ)), Θ, st)[1]
-	# Nr_ϕplus = reshape(neuralnet_ϕplus[1, :], size(q))
-	# Nθ_ϕplus = reshape(neuralnet_ϕplus[2, :], size(q))
-	# Nϕ_ϕplus = reshape(neuralnet_ϕplus[3, :], size(q))
-	# Nα_ϕplus = reshape(neuralnet_ϕplus[4, :], size(q))
-
-	Nr_ϕplus = NN[1](vcat(q, μ, cos.(ϕ .+ ϵ), sin.(ϕ .+ ϵ)), Θ.net1, st[1])[1]
-	Nθ_ϕplus = NN[2](vcat(q, μ, cos.(ϕ .+ ϵ), sin.(ϕ .+ ϵ)), Θ.net2, st[2])[1]
-	Nϕ_ϕplus = NN[3](vcat(q, μ, cos.(ϕ .+ ϵ), sin.(ϕ .+ ϵ)), Θ.net3, st[3])[1]
-	Nα_ϕplus = NN[4](vcat(q, μ, cos.(ϕ .+ ϵ), sin.(ϕ .+ ϵ)), Θ.net4, st[4])[1]
-
-	# neuralnet_ϕminus = NN(vcat(q, μ, cos.(ϕ .- ϵ), sin.(ϕ .- ϵ)), Θ, st)[1]
-	# Nr_ϕminus = reshape(neuralnet_ϕminus[1, :], size(q))
-	# Nθ_ϕminus = reshape(neuralnet_ϕminus[2, :], size(q))
-	# Nϕ_ϕminus = reshape(neuralnet_ϕminus[3, :], size(q))
-	# Nα_ϕminus = reshape(neuralnet_ϕminus[4, :], size(q))
-
-	Nr_ϕminus = NN[1](vcat(q, μ, cos.(ϕ .- ϵ), sin.(ϕ .- ϵ)), Θ.net1, st[1])[1]
-	Nθ_ϕminus = NN[2](vcat(q, μ, cos.(ϕ .- ϵ), sin.(ϕ .- ϵ)), Θ.net2, st[2])[1]
-	Nϕ_ϕminus = NN[3](vcat(q, μ, cos.(ϕ .- ϵ), sin.(ϕ .- ϵ)), Θ.net3, st[3])[1]
-	Nα_ϕminus = NN[4](vcat(q, μ, cos.(ϕ .- ϵ), sin.(ϕ .- ϵ)), Θ.net4, st[4])[1]
-	
+    Nr, Nθ, Nϕ, Nα = evaluate_subnetworks(q, μ, ϕ, Θ, st, NN)
+    Nr_qplus, Nθ_qplus, Nϕ_qplus, Nα_qplus = evaluate_subnetworks(q .+ ϵ, μ, ϕ, Θ, st, NN)
+    Nr_qminus, Nθ_qminus, Nϕ_qminus, Nα_qminus = evaluate_subnetworks(q .- ϵ, μ, ϕ, Θ, st, NN)
+    Nr_μplus, Nθ_μplus, Nϕ_μplus, Nα_μplus = evaluate_subnetworks(q, μ .+ ϵ, ϕ, Θ, st, NN)
+    Nr_μminus, Nθ_μminus, Nϕ_μminus, Nα_μminus = evaluate_subnetworks(q, μ .- ϵ, ϕ, Θ, st, NN)
+    Nr_ϕplus, Nθ_ϕplus, Nϕ_ϕplus, Nα_ϕplus = evaluate_subnetworks(q, μ, ϕ .+ ϵ, Θ, st, NN)
+    Nr_ϕminus, Nθ_ϕminus, Nϕ_ϕminus, Nα_ϕminus = evaluate_subnetworks(q, μ, ϕ .- ϵ, Θ, st, NN)
 
 	return ((Br(q .+ ϵ, μ, ϕ, Θ, st, Nr_qplus, params) .- Br(q .- ϵ, μ, ϕ, Θ, st, Nr_qminus, params)) ./ (2 .* ϵ),
             (Bθ(q .+ ϵ, μ, ϕ, Θ, st, Nθ_qplus) .- Bθ(q .- ϵ, μ, ϕ, Θ, st, Nθ_qminus)) ./ (2 .* ϵ),
@@ -412,7 +318,6 @@ function calclulate_∂α_∂t(q, μ, ϕ, NN, Θ, st, ϵ)
 end
 
 
-
 function loss_function(input, Θ, st, NN, params)
 	# unpack input
 	q = @view input[1:1,:]
@@ -421,16 +326,8 @@ function loss_function(input, Θ, st, NN, params)
 
 	# Calculate derivatives
 	dBr_dq, dBθ_dq, dBϕ_dq, dα_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dα_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ, dα_dϕ  = calculate_derivatives(q, μ, ϕ, Θ, st, NN, params)[1:12]
-	# neuralnet = NN(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
-	# Nr = reshape(neuralnet[1, :], size(q))
-	# Nθ = reshape(neuralnet[2, :], size(q))
-	# Nϕ = reshape(neuralnet[3, :], size(q))
-	# Nα = reshape(neuralnet[4, :], size(q))
-
-	Nr = NN[1](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]
-	Nθ = NN[2](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net2, st[2])[1]
-	Nϕ = NN[3](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
-	Nα = NN[4](vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net4, st[4])[1]
+	
+    Nr, Nθ, Nϕ, Nα = evaluate_subnetworks(q, μ, ϕ, Θ, st, NN)
 
 	Br1 = Br(q, μ, ϕ, Θ, st, Nr, params)
 	Bθ1 = Bθ(q, μ, ϕ, Θ, st, Nθ)
@@ -479,7 +376,6 @@ function callback(p, l, ls, losses, prog, invH, params)
 	end
 
 	# Store the last inverse Hessian (only in the quasi-Newton stage)
-	# if length(losses[1]) > params.optimization.adam_sets * params.optimization.adam_iters + 1
 	if "~inv(H)" ∈ keys(p.original.metadata)
 		invH[] = p.original.metadata["~inv(H)"]
 	end
@@ -504,7 +400,7 @@ end
 
 function train!(result, optprob, losses, invH, job_dir, params)
 
-	# Initial the inverse Hessian
+	# Initialise the inverse Hessian
 	initial_invH = nothing
 
 	for i in 1:params.optimization.N_sets
@@ -516,13 +412,13 @@ function train!(result, optprob, losses, invH, job_dir, params)
 			maxiters = params.optimization.adam_iters
 		else
 			if params.optimization.quasiNewton_method == "BFGS"
-				optimizer=BFGS(linesearch=LineSearches.StrongWolfe(), initial_invH=initial_invH)
+				optimizer=BFGS(linesearch=LineSearches.MoreThuente(), initial_invH=initial_invH)
 				opt_label = "BFGS"
 			elseif params.optimization.quasiNewton_method == "SSBFGS"
-				optimizer=SSBFGS(linesearch=LineSearches.StrongWolfe(), initial_invH=initial_invH)
+				optimizer=SSBFGS(linesearch=LineSearches.MoreThuente(), initial_invH=initial_invH)
 				opt_label = "SSBFGS"
 			elseif params.optimization.quasiNewton_method == "SSBroyden"
-				optimizer=SSBroyden(linesearch=LineSearches.StrongWolfe(), initial_invH=initial_invH)
+				optimizer=SSBroyden(linesearch=LineSearches.MoreThuente(), initial_invH=initial_invH)
 				opt_label = "SSBroyden"
 			end
 
@@ -551,13 +447,13 @@ function train!(result, optprob, losses, invH, job_dir, params)
 			initial_invH = begin x -> invH[] end
 		end
 
-			# Save check point
-			Θ_trained = result.u |> Lux.cpu_device()
-			
-            checkpoints_dir = mkpath(joinpath(job_dir, "checkpoints"))
-            
-			@save joinpath(checkpoints_dir, "trained_model_$i.jld2") Θ_trained
-			@save joinpath(checkpoints_dir, "losses_vs_iterations_$i.jld2") losses
+        # Save check point
+        Θ_trained = result.u |> Lux.cpu_device()
+        
+        checkpoints_dir = mkpath(joinpath(job_dir, "checkpoints"))
+        
+        @save joinpath(checkpoints_dir, "trained_model_$i.jld2") Θ_trained
+        @save joinpath(checkpoints_dir, "losses_vs_iterations_$i.jld2") losses
 	end
    
 	return result
@@ -565,14 +461,7 @@ end
 
 function train_neural_network!(result, optprob, losses, invH, job_dir, params)
 
-		# # Initial training with Adam
-		# result = train!(result, optprob, losses, invH, 
-		# 					 "Adam", params.optimization.adam_sets, params.optimization.adam_iters,
-		# 					 params)
-
 		
-
-		# Training with quasi-Newton method
 		result = train!(result, optprob, losses, invH, job_dir, params)
 
    	return result
