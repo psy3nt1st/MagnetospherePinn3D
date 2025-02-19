@@ -26,8 +26,8 @@ if endswith(subdirs[1], "checkpoints")
 	# Plot all components of loss
 	f1 = Figure()
 	ax1 = Makie.Axis(f1[1, 1], xlabel="Iteration", ylabel="Loss", yscale=log10)
-	labels=["Total" L"\hat{r}" L"\hat{θ}" L"\hat{ϕ}" L"∇⋅\textbf{B}" L"\textbf{B}⋅∇α"]
-	linewidths = [5, 2, 2, 2, 2, 2]
+	labels=["Total" L"\hat{r}" L"\hat{θ}" L"\hat{ϕ}" L"∇⋅\textbf{B}" L"\textbf{B}⋅∇α" L"\alpha_S"]
+	linewidths = [5, 2, 2, 2, 2, 2, 2]
 	for (i, l) in enumerate(losses)
 		lines!(ax1, l, label=string(labels[i]), linewidth=linewidths[i])
 	end

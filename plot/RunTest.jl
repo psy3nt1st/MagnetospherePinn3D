@@ -29,17 +29,24 @@ NN, _, st = create_neural_network(params)
 losses = load(joinpath(datadir, "losses_vs_iterations.jld2"), "losses")
 
 # Create test grid
-n_q = 160
-n_μ = 80
-n_ϕ = 160
+n_q = 80
+n_μ = 40
+n_ϕ = 80
+t1 = 1
 
-q, μ, ϕ, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α = create_test(n_q, n_μ, n_ϕ, NN, Θ_trained, st, params, use_θ=true)[1:9]
+# q, μ, ϕ, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α = create_test(n_q, n_μ, n_ϕ, NN, Θ_trained, st, params, use_θ=true)[1:9]
+q, μ, ϕ, t, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α, Nr, Nθ, Nϕ, Nα, Nα_S = create_test(n_q, n_μ, n_ϕ, t1, NN, Θ_trained, st, params, use_θ=true)
 # q, θ, ϕ, Br1, Bθ1, Bϕ1, α1, ∇B = read_gradrubin_data()[1:8]
 Bmag1 = .√(Br1.^2 .+ Bθ1.^2 .+ Bϕ1.^2)
+
+size(t)
+
 
 x = @. sqrt(1 - μ^2) / q * cos(ϕ)
 y = @. sqrt(1 - μ^2) / q * sin(ϕ)
 z = @. μ / q 
+
+# α_surface1 = α_surface(μ, ϕ, t1, Nα_S, params)
 
 
 function calclulate_dα_dt(q, μ, ϕ, NN, Θ, st, ϵ; use_θ = false)

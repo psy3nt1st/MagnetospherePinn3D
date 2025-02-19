@@ -359,8 +359,3 @@ function ∂_∂ϕ(u, ϕ)
 
     return ∂u_∂ϕ
 end
-
-function findnearest(A::AbstractArray, t) 
-   
-   return A[findmin(x->abs(x-t), A)[2]]
-end
