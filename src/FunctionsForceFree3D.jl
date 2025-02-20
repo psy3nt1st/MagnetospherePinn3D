@@ -254,9 +254,9 @@ function calculate_derivatives(q, μ, ϕ, Θ, st, NN, params)
 	Nϕ_qminus = NN[3](vcat(q .- ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net3, st[3])[1]
 	Nα_qminus = NN[4](vcat(q .- ϵ, μ, cos.(ϕ), sin.(ϕ)), Θ.net4, st[4])[1]
 
-    ∂Nr_∂q_fd = (Nr_qplus - Nr_qminus) ./ (2 * ϵ)
+    # ∂Nr_∂q_fd = (Nr_qplus - Nr_qminus) ./ (2 * ϵ)
 
-    println("Calculating Zygote gradient")
+    # println("Calculating Zygote gradient")
     # sNN = StatefulLuxLayer(NN[1], Θ.net1, st[1])
     # ∂Nr_∂q_ad = Zygote.gradient(Base.Fix1(sum, identity) ∘ sNN, vcat(q, μ, cos.(ϕ), sin.(ϕ)))[1][1:1, :]
     # ∂Nr_∂q_ad = Zygote.gradient(q -> sum(sNN(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.net1, st[1])[1]), q)[1]
