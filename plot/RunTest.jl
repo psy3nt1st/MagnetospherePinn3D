@@ -1,29 +1,28 @@
 using MagnetospherePinn3D
 using JLD2
-using GLMakie
 using PrettyPrint
 using Dates
 using DelimitedFiles
-using LaTeXStrings
 using Parameters
+using DifferentialEquations
+using Integrals
 
-include("Functions.jl")
-# include("PlottingFunctions.jl")
+include("PostProcess.jl")
 
 # Get path to data directory
 dirs = filter(dir -> isdir(dir) && startswith(basename(dir), "ff3d") , readdir(abspath("../data"); join=true))
 # dirs = filter(dir -> isdir(dir) && startswith(basename(dir), "local") , readdir(abspath("../data"); join=true))
-# datadir = joinpath(dirs[end-2], "24")
-# datadir = "../data/ff3d_3042596"
-# datadir = "../data/local_2024_10_29_16_39_46"
+
+# datadir = joinpath("../data", "hotspot_a0_1.5_l3_n50")
+# datadir = joinpath("../data", "ff3d_3145941")
 datadir = dirs[end]
-# datadir = "../data/current_free_non_axisym/"
+
 @info "Using data in $datadir"
 
 params = import_params(joinpath(datadir, "config.toml"))
 
 # Create neural network
-NN, _, st = create_neural_network(params)
+NN, _, st = create_neural_network(params, test_mode=true)
 
 Θ_trained = load(joinpath(datadir, "trained_model.jld2"), "Θ_trained")
 losses = load(joinpath(datadir, "losses_vs_iterations.jld2"), "losses")
@@ -32,87 +31,50 @@ losses = load(joinpath(datadir, "losses_vs_iterations.jld2"), "losses")
 n_q = 80
 n_μ = 40
 n_ϕ = 80
-t1 = 1
+t1 = 1.0
 
-# q, μ, ϕ, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α = create_test(n_q, n_μ, n_ϕ, NN, Θ_trained, st, params, use_θ=true)[1:9]
-q, μ, ϕ, t, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α, Nr, Nθ, Nϕ, Nα, Nα_S = create_test(n_q, n_μ, n_ϕ, t1, NN, Θ_trained, st, params, use_θ=true)
-# q, θ, ϕ, Br1, Bθ1, Bϕ1, α1, ∇B = read_gradrubin_data()[1:8]
+test_input = create_test_input(n_q, n_μ, n_ϕ, t1, params; use_θ = false)
+
+q, μ, ϕ, t, 
+Br1, Bθ1, Bϕ1, α1, 
+∇B, B∇α, αS,
+Nr, Nθ, Nϕ, Nα = create_test(test_input, NN, Θ_trained, st, params)
 Bmag1 = .√(Br1.^2 .+ Bθ1.^2 .+ Bϕ1.^2)
 
-size(t)
 
 
-x = @. sqrt(1 - μ^2) / q * cos(ϕ)
-y = @. sqrt(1 - μ^2) / q * sin(ϕ)
-z = @. μ / q 
+const ϵ = ∛(eps())
 
-# α_surface1 = α_surface(μ, ϕ, t1, Nα_S, params)
+q2 = reshape(q, 1, length(q))
+μ2 = reshape(μ, 1, length(μ))
+ϕ2 = reshape(ϕ, 1, length(ϕ))
+t2 = reshape(t, 1, length(t))
+qS2 = ones(size(q2))
 
 
-function calclulate_dα_dt(q, μ, ϕ, NN, Θ, st, ϵ; use_θ = false)
-	
-	n_μ = size(q)[2]
-	n_ϕ = size(q)[3]
 
-	q = reshape(q[end, :, :], 1, :)
-	μ = reshape(μ[end, :, :], 1, :)
-	ϕ = reshape(ϕ[end, :, :], 1, :)
+subnet_α = NN.layers[4]
+# Nα = subnet_α(vcat(q1, μ, cos.(ϕ), sin.(ϕ), t), Θ.layer_4, st.layer_4)[1]
+Nα_tplus = subnet_α(vcat(qS2, μ2, cos.(ϕ2), sin.(ϕ2), t2 .+ ϵ), Θ_trained.layer_4, st.layer_4)[1]
+Nα_tminus = subnet_α(vcat(qS2, μ2, cos.(ϕ2), sin.(ϕ2), t2 .- ϵ), Θ_trained.layer_4, st.layer_4)[1]
+dαS_dt = (α(qS2, μ2, ϕ2, t2 .+ ϵ, Nα_tplus, params) .- α(qS2, μ2, ϕ2, t2 .- ϵ, Nα_tminus, params)) ./ (2 .* ϵ)
 
-	if use_θ
-		θ = reshape([θ for ϕ in range(0, 2π, n_ϕ) for θ in range(1e-2, π - 1e-2, n_μ)], 1, :)
-		μ = cos.(θ)
-	end
-	
-	NN = pinn(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ, st)[1]
-	Nr = reshape(NN[1, :], size(q))
-	Nθ = reshape(NN[2, :], size(q))
-	Nϕ = reshape(NN[3, :], size(q))
-	Nα = reshape(NN[4, :], size(q))
 
-	Br1 = Br(q, μ, ϕ, Θ_trained, st, Nr, params)
-	Bθ1 = Bθ(q, μ, ϕ, Θ_trained, st, Nθ)
-	Bϕ1 = Bϕ(q, μ, ϕ, Θ_trained, st, Nϕ)
-	α_surface = α(q, μ, ϕ, Θ_trained, st, Nα, params)
-	dBr_dq, dBθ_dq, dBϕ_dq, dα_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dα_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ, dα_dϕ, d2α_dq2, d2α_dμ2, d2α_dϕ2 = calculate_derivatives(q, μ, ϕ, Θ, st, pinn, ϵ)
 
-	∇α = grad(q, μ, dα_dq, dα_dμ, dα_dϕ)
-	∇B2 = calculate_gradB2(q, μ, Br1, Bθ1, Bϕ1, dBr_dq, dBθ_dq, dBϕ_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ)
-	B2 = @. Br1^2 + Bθ1^2 + Bϕ1^2
-	advective_term = scalar_product(∇α[1], ∇α[2], ∇α[3], ∇B2[1], ∇B2[2], ∇B2[3]) ./ B2
-	diffusive_term = laplacian(q, μ, dα_dμ, d2α_dq2, d2α_dμ2, d2α_dϕ2)
-	dα_dt = diffusive_term .+ advective_term
-	# dα_dt[α1 .< 1e-4] .= 0.0
+αS_eq = calculate_αS_equation(μ2, ϕ2, t2, qS2, reshape(αS, size(dαS_dt)), dαS_dt)
+αS_eq = reshape(αS_eq, n_q, n_μ, n_ϕ)
+idx = argmax(abs.(αS_eq))
+αS[idx]
+μ[idx]
+ϕ[idx]
+# x = @. sqrt(1 - μ^2) / q * cos(ϕ)
+# y = @. sqrt(1 - μ^2) / q * sin(ϕ)
+# z = @. μ / q 
 
-	return dα_dt, diffusive_term, advective_term, α_surface
-end
-
-function advance_α_timestep(q, μ, ϕ, pinn, Θ_trained, st, params; use_θ = false, dt = 1e-3)
-	
-	dα_dt, diffusive_term, advective_term, α_surface = calclulate_dα_dt(q, μ, ϕ, pinn, Θ_trained, st, params, use_θ = use_θ)
-
-	return α_surface .+ dt .* dα_dt	
-end
-
-# α_surface_next = advance_α_timestep(q, μ, ϕ, pinn, Θ_trained, st, params, use_θ = true, dt = 1e-3)
-# α_surface_next = reshape(α_surface_next, n_μ, n_ϕ)
-
-# length(α_surface_next)
-
-# dα_dt, diffusive_term, advective_term, α_surface = calclulate_dα_dt(q, μ, ϕ, pinn, Θ_trained, st, params, use_θ = true)
-# dα_dt = reshape(dα_dt, n_μ, n_ϕ)
-# diffusive_term = reshape(diffusive_term, n_μ, n_ϕ)
-# advective_term = reshape(advective_term, n_μ, n_ϕ)
-# α_surface = reshape(α_surface, n_μ, n_ϕ)
-# println(size(da_dt))
-
-# Integrate fieldlines
-fieldlines=[]
-footprints = find_footprints(α1, Br1, μ, ϕ, α_thres = 0.0, Br1_thres = 0.0, μ_thres = 0.7)
-sol = integrate_fieldlines!(fieldlines, footprints, NN, Θ_trained, st, params)
-println("Number of fieldlines = ", length(fieldlines))
+@info "Test created"
 
 # Calculate energy
-energy = calculate_energy(NN, Θ_trained, st, params)
+energy = calculate_energy(t1, NN, Θ_trained, st, params)
 println("Energy = ", energy)
 
 # Calculate max Bϕ ratio
