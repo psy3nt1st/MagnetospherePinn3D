@@ -10,6 +10,7 @@ function main()
     params = import_params(config_file)
 
     NN, Θ, st = create_neural_network(params)
+    println(size(Θ))
 
     invH = Base.RefValue{AbstractArray{Float64, 2}}()
     losses = [Float64[] for _ in 1:7]

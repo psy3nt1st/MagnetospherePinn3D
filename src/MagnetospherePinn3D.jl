@@ -3,11 +3,8 @@
     using ComponentArrays
     using Configurations
     using Dates
-    using DifferentialEquations
     using Distributions
-    using Integrals
     using JLD2
-    using LegendrePolynomials
     using Lux
     using LuxCUDA
     using LineSearches
@@ -18,12 +15,6 @@
     using Random
     using TOML
     using Zygote
-
-
-
-
-    # import OptimizationOptimisers: Adam
-
 
     export 
         # Types
@@ -39,6 +30,7 @@
         setup_optprob,
         train_neural_network!,
         gpu_device,
+        evaluate_subnetworks,
 
         # Variables
         α,
@@ -49,6 +41,7 @@
 
         # Boundary_conditions
         α_surface,
+        Br_surface,
 
         # File management
         setup_jobdir,
@@ -70,30 +63,8 @@
         calculate_ϕ_equation,
         calculate_divergence,
         calculate_Bdotgradα,
-        calculate_gradB2
-
-        
-        # # PostProcess
-        # create_test,
-        # calculate_energy,
-        # find_footprints,
-        # integrate_fieldlines!,
-        # findnearest
-
-
-        # plot_fieldlines      
-        # Variables,
-        # Parameters,
-        # α_surface,
-        # f_boundary, 
-        # h_boundary, 
-        # initialize,
-        # loss_function,
-        # Optimizers
-        # Adam,
-        # BFGS,
-        # LBFGS,
-
+        calculate_gradB2,
+        calculate_αS_equation
 
     include("Equations.jl")
     include("Trainning.jl")

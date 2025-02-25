@@ -35,7 +35,7 @@ end
 	sigma_gs::Float64 = 2.0
 	use_rc::Bool = false
 	rc::Float64 = 3.35
-	dt::Float64 = 1e-3
+	t_final::Float64 = 1e-3
 end
 
 @option "Params" mutable struct Params

@@ -8,7 +8,7 @@ function create_subnet(N_input, N_neurons, N_layers, activation)
 end
 
 
-function create_neural_network(params)
+function create_neural_network(params; test_mode=false)
 
 	pa = params.architecture
 
@@ -34,10 +34,11 @@ function create_neural_network(params)
 	
     # Create neural network. Separate subnetworks for each output
 	subnetworks = [create_subnet(pa.N_input, pa.N_neurons, pa.N_layers, activation) for _ in 1:pa.N_output]
-    push!(subnetworks, create_subnet(pa.N_input-1, pa.N_neurons, pa.N_layers, activation))
     NN = Chain(Parallel(vcat, subnetworks...))
     Θ, st = Lux.setup(rng, NN)
-    Θ = Θ |> ComponentArray |> gpu_device() .|> Float64
+    if !test_mode
+        Θ = Θ |> ComponentArray |> gpu_device() .|> Float64
+    end
     
     return NN, Θ, st
 
@@ -49,9 +50,10 @@ function generate_input(params)
 	q = rand(Uniform(0.05, 1), (1, params.architecture.N_points))
 	μ = rand(Uniform(-1, 1), (1, params.architecture.N_points))
 	ϕ = rand(Uniform(0, 2π), (1, params.architecture.N_points))
-    t = rand(Uniform(0, 0.1), (1, params.architecture.N_points))
+    t = rand(Uniform(0, params.model.t_final), (1, params.architecture.N_points))
+    q1 = ones(1, params.architecture.N_points)
 
-	input = vcat(q, μ, ϕ, t) |> gpu_device() .|> Float64
+	input = vcat(q, μ, ϕ, t, q1) |> gpu_device() .|> Float64
 
 	return input
 end
@@ -62,20 +64,23 @@ function loss_function(input, Θ, st, NN, params)
 	μ = @view input[2:2,:]
 	ϕ = @view input[3:3,:]
     t = @view input[4:4,:]
+    q1 = @view input[5:5,:]
 
 	# Calculate derivatives
 	dBr_dq, dBθ_dq, dBϕ_dq, dα_dq, 
     dBr_dμ, dBθ_dμ, dBϕ_dμ, dα_dμ, 
     dBr_dϕ, dBθ_dϕ, dBϕ_dϕ, dα_dϕ, 
-    d2α_dq2, d2α_dμ2, d2α_dϕ2, dα_dt  = calculate_derivatives(q, μ, ϕ, t, Θ, st, NN, params)
+    dαS_dt  = calculate_derivatives(q, μ, ϕ, t, q1, Θ, st, NN, params)
 	
-    Nr, Nθ, Nϕ, Nα, Nα_S = evaluate_subnetworks(q, μ, ϕ, t, Θ, st, NN)
+    Nr, Nθ, Nϕ, Nα = evaluate_subnetworks(q, μ, ϕ, t, Θ, st, NN)
+    subnet_α = NN.layers[4]
+    Nα_S = subnet_α(vcat(q1, μ, cos.(ϕ), sin.(ϕ), t), Θ.layer_4, st.layer_4)[1]
 
-	Br1 = Br(q, μ, ϕ, Θ, st, Nr, params)
-	Bθ1 = Bθ(q, μ, ϕ, Θ, st, Nθ)
-	Bϕ1 = Bϕ(q, μ, ϕ, Θ, st, Nϕ)
-	α1 = α(q, μ, ϕ, t, Θ, st, Nα, Nα_S, params)
-    # α_surface1 = α_surface(μ, ϕ, t, Nα_S, params)
+	Br1 = Br(q, μ, ϕ, Nr, params)
+	Bθ1 = Bθ(q, μ, ϕ, Nθ)
+	Bϕ1 = Bϕ(q, μ, ϕ, Nϕ)
+	α1 = α(q, μ, ϕ, t, Nα, params)
+    αS = α(q1, μ, ϕ, t, Nα_S, params)
 
 	r_eq = calculate_r_equation(q, μ, ϕ, Br1, Bθ1, Bϕ1, α1, dBr_dq, dBθ_dq, dBϕ_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ)
 	θ_eq = calculate_θ_equation(q, μ, ϕ, Br1, Bθ1, Bϕ1, α1, dBr_dq, dBθ_dq, dBϕ_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ)
@@ -84,7 +89,7 @@ function loss_function(input, Θ, st, NN, params)
 	∇B = calculate_divergence(q, μ, ϕ, Br1, Bθ1, Bϕ1, dBr_dq, dBθ_dq, dBϕ_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ)
 	B∇α = calculate_Bdotgradα(q, μ, ϕ, Br1, Bθ1, Bϕ1, dα_dq, dα_dμ, dα_dϕ) 
 
-    αS_eq = calclulate_αS_equation(μ, dα_dt, dα_dμ, d2α_dμ2, d2α_dϕ2)
+    αS_eq = calculate_αS_equation(μ, ϕ, t, q1, αS, dαS_dt)
 
 	# Calculate loss
 	l1 = sum(abs2, r_eq ./ q .^ 4)
@@ -104,7 +109,9 @@ function loss_function(input, Θ, st, NN, params)
 		g = identity
 	end
 
+    
 	return g((l1 + l2 + l3 + l4 + l5 + l6) / params.architecture.N_points), ls
+	# return g((l1 + l2 + l3 + l4 + l5) / params.architecture.N_points), ls
 
 end
 
@@ -181,7 +188,6 @@ function train!(result, optprob, losses, invH, job_dir, params)
                                     optimizer,
                                     callback = (p, l, ls) -> callback(p, l, ls, losses, prog, invH, params),
                                     maxiters = maxiters,
-                                    # store_trace = true,
                                     extended_trace = true
                                    )
 	
@@ -195,6 +201,9 @@ function train!(result, optprob, losses, invH, job_dir, params)
         # Save check point
         Θ_trained = result.u |> Lux.cpu_device()
         
+        @save joinpath(job_dir, "trained_model.jld2") Θ_trained
+        @save joinpath(job_dir, "losses_vs_iterations.jld2") losses
+
         checkpoints_dir = mkpath(joinpath(job_dir, "checkpoints"))
         
         @save joinpath(checkpoints_dir, "trained_model_$i.jld2") Θ_trained
@@ -207,7 +216,7 @@ end
 function train_neural_network!(result, optprob, losses, invH, job_dir, params)
 
 		
-		result = train!(result, optprob, losses, invH, job_dir, params)
+    result = train!(result, optprob, losses, invH, job_dir, params)
 
    	return result
 end
