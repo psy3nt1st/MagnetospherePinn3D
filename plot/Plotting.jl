@@ -1,3 +1,20 @@
+function plot_losses(losses)
+
+    labels=["Total" L"\hat{r}" L"\hat{θ}" L"\hat{ϕ}" L"∇⋅\textbf{B}" L"\textbf{B}⋅∇α" L"\alpha_S"]
+	linewidths = [5, 2, 2, 2, 2, 2, 2]
+
+    f1 = Figure()
+	ax1 = Makie.Axis(f1[1, 1], xlabel="Iteration", ylabel="Loss", yscale=log10)
+	
+	for (i, l) in enumerate(losses)
+		lines!(ax1, l, label=string(labels[i]), linewidth=linewidths[i])
+	end
+    
+	axislegend(ax1)
+	display(GLMakie.Screen(), f1)
+
+end
+
 function plot_l2error(resolutions, l2errors)
 	fig = Figure(size = (800, 600))
 	ax = Axis(fig[1, 1], xlabel = "Resolution", ylabel = "L2 error", xscale = log10, yscale = log10)
@@ -68,27 +85,49 @@ function plot_l2_errors_vs_ϕ(ϕ, l2errors_vs_ϕ)
 
 end
 
-function plot_line(sol, lscene)
-   q, μ, ϕ = sol[1,:], sol[2,:], sol[3,:]
-   x = @. √abs(1 - μ^2) / q * cos(ϕ)
-   y = @. √abs(1 - μ^2) / q * sin(ϕ)
-   z = @. μ / q
+function plot_line(lscene, sol, α_line, params)
+    
+    q, μ, ϕ = sol[1,:], sol[2,:], sol[3,:]
+    
+    x = @. √(abs(1 - μ^2)) / q * cos(ϕ)
+    y = @. √(abs(1 - μ^2)) / q * sin(ϕ)
+    z = @. μ / q
 
-   lines!(lscene,x, y, z, color=:silver)
+    lines!(lscene, x, y, z, color=α_line, colormap=reverse(cgrad(:gist_heat, 100)), colorrange=(0, params.model.alpha0))
+   
 end
 
-function plot_fieldlines(fieldlines, lscene)
+function plot_fieldlines(lscene, fieldlines, α_lines, params)
    for l in eachindex(fieldlines)
       sol = fieldlines[l]
-      plot_line(sol, lscene)
+      α_line = α_lines[l]
+      plot_line(lscene, sol, α_line, params)
    end
+end
+
+function plot_magnetosphere_3d(fieldlines, α1, α_lines, params)
+	f = Figure()
+	lscene = LScene(f[1,1], show_axis=false)
+
+	star = mesh!(lscene, Sphere(Point3(0, 0, 0), 1.0)
+				 , color=abs.(α1), colormap=reverse(cgrad(:gist_heat, 100)), interpolate=true
+				 , colorrange=(0, params.model.alpha0)
+				 )
+	cbar = Colorbar(f[1, 2], star)
+	plot_fieldlines(lscene, fieldlines, α_lines, params)  
+
+    # Adjust viewing angle
+    zoom!(lscene.scene, cameracontrols(lscene.scene), 0.95)
+    rotate_cam!(lscene.scene, Vec3f(0.5, 2.2, 0.0))
+	display(GLMakie.Screen(), f, update=false)
+	save(joinpath("figures", "fieldlines.png"), f, update=false)
 end
 
 function plot_surface_α(μ, ϕ, α_surface)
 	f = Figure()
 	ax = Axis(f[1, 1], xlabel="ϕ", ylabel="μ", title="Surface α")
-	cont = contourf!(ϕ[end,1,:], μ[end,:,1], transpose(log10.(abs.(α_surface))), levels=range(-5, 1, 100), colormap=reverse(cgrad(:gist_heat)))
-	cbar = Colorbar(f[1, 2], cont, scale=log10)
+	cont = contourf!(ϕ[end,1,:], μ[end,:,1], transpose(α_surface), levels=100, colormap=reverse(cgrad(:gist_heat)))
+	cbar = Colorbar(f[1, 2], cont)
 	tightlimits!(ax)
 	display(GLMakie.Screen(), f)
 	save(joinpath("figures", "surface_alpha.png"), f)
@@ -149,7 +188,7 @@ end
 function plot_surface_Br(μ, ϕ, Br1)
 	f = Figure()
 	ax = Axis(f[1, 1], xlabel="ϕ", ylabel="μ", title="Surface B")
-	cont = contourf!(ϕ[end,1,:], μ[end,:,1], transpose(Br1[end,:,:]), levels = 100, colormap=:blues)
+	cont = contourf!(ϕ[end,1,:], μ[end,:,1], transpose(Br1), levels = 100, colormap=:blues)
 	cbar = Colorbar(f[1, 2], cont)
 	tightlimits!(ax)
 	display(GLMakie.Screen(), f)
