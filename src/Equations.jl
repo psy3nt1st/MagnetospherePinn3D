@@ -168,7 +168,7 @@ function calculate_Bdotgradα(q, μ, ϕ, Br, Bθ, Bϕ, dα_dq, dα_dμ, dα_dϕ)
 end
 
 function calculate_αS_equation(μ, ϕ, t, q1, αS, dαS_dt)
- 
+
 	return @. dαS_dt + αS
 end
 

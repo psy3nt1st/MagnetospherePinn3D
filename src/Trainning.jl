@@ -97,8 +97,13 @@ function loss_function(input, Θ, st, NN, params)
 	l3 = sum(abs2, ϕ_eq ./ q .^ 4)
 	l4 = sum(abs2, .√(1 .- μ .^ 2) .* ∇B ./ q .^ 4)
 	l5 = sum(abs2, B∇α)
-    l6 = sum(abs2, αS_eq)
-	ls = [l1, l2, l3, l4, l5, l6] ./ params.architecture.N_points 
+
+    if params.model.alpha_bc_mode == "diffusive"
+        l6 = sum(abs2, αS_eq)
+        ls = [l1, l2, l3, l4, l5, l6] ./ params.architecture.N_points  
+    else
+        ls = [l1, l2, l3, l4, l5] ./ params.architecture.N_points 
+    end
 
 	if params.optimization.loss_function == "MSE"
 		g = identity
@@ -109,9 +114,11 @@ function loss_function(input, Θ, st, NN, params)
 		g = identity
 	end
 
-    
-	return g((l1 + l2 + l3 + l4 + l5 + l6) / params.architecture.N_points), ls
-	# return g((l1 + l2 + l3 + l4 + l5) / params.architecture.N_points), ls
+    if params.model.alpha_bc_mode == "diffusive"
+        return g((l1 + l2 + l3 + l4 + l5 + l6) / params.architecture.N_points), ls
+    else
+        return g((l1 + l2 + l3 + l4 + l5) / params.architecture.N_points), ls
+    end
 
 end
 

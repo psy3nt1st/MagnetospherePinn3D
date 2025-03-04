@@ -1,19 +1,23 @@
 function setup_jobdir()
-   
+    
+    # Jobs ran on the cluster
     if "SLURM_JOB_NAME" in keys(ENV)
         job_name = ENV["SLURM_JOB_NAME"]
+        # Array jobs
         if "SLURM_ARRAY_JOB_ID" in keys(ENV)
             job_id = ENV["SLURM_ARRAY_JOB_ID"]
             task_id = ENV["SLURM_ARRAY_TASK_ID"]
             job_dir = joinpath("data", "$(job_name)_$(job_id)", "$(task_id)")
             mkpath(job_dir)
             cp("config_template.toml", joinpath(job_dir, "config_template.toml"))
+        # Single jobs
         else
             job_id = ENV["SLURM_JOB_ID"]
             job_dir = joinpath("data", "$(job_name)_$(job_id)")
             mkpath(job_dir)
             cp("config_template.toml", joinpath(job_dir, "config_template.toml"))
         end
+    # Jobs on local machine
     else
         job_dir = "data/local_$(Dates.format(now(), "yyyy_mm_dd_HH_MM_SS"))"
         mkpath(job_dir)
@@ -47,57 +51,59 @@ function export_params(params, filename)
     
 end
 
-function setup_configfile(job_dir)
+function setup_configfile(job_dir; combinations=[])
    
-   # Parameters that change between experiments
-   optimizers = ["BFGS", "SSBFGS", "SSBroyden"]
-   layers = [2, 3, 4]
-   neurons = [20, 30, 40]
-   
-   combinations = [optimizers, layers, neurons]
+    # Array jobs on the cluster
+    if "SLURM_ARRAY_TASK_ID" in keys(ENV)
+        config_file_template = joinpath(job_dir, "config_template.toml")
+        params1 = import_params(config_file_template)
+        
+        task_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
+        indices = compute_combination(task_id, combinations)
 
-   # Set up config file for experiment (if running on SLURM cluster)
-   if "SLURM_ARRAY_TASK_ID" in keys(ENV)
-      config_file_template = joinpath(job_dir, "config_template.toml")
-      params1 = import_params(config_file_template)
-      
-      task_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
-      indices = compute_combination(task_id, combinations)
+        params1.optimization.loss_function  = combinations[1][indices[1]]
+        params1.architecture.N_layers = combinations[2][indices[2]]
+        params1.architecture.N_neurons = combinations[3][indices[3]]
+        params1.architecture.N_points = combinations[4][indices[4]]
+        params1.optimization.quasiNewton_iters = combinations[5][indices[5]]
 
-      params1.optimization.quasiNewton_method = optimizers[indices[1]]
-      params1.architecture.N_layers = layers[indices[2]]
-      params1.architecture.N_neurons = neurons[indices[3]]
+        @info "Running experiment with combination 
+        loss_function = $(params1.optimization.loss_function)
+        N_layers = $(params1.architecture.N_layers)
+        N_neurons = $(params1.architecture.N_neurons)
+        N_points = $(params1.architecture.N_points)
+        quasiNewton_iters = $(params1.optimization.quasiNewton_iters)"
 
-      export_params(params1, joinpath(job_dir, "config.toml"))
-      config_file = joinpath(job_dir, "config.toml")
-   else
-      # Set up config file for experiment (if running on local machine)
-      cp(joinpath(job_dir, "config_template.toml"), joinpath(job_dir, "config.toml"))
-      config_file = joinpath(job_dir, "config.toml")
-   end
+        export_params(params1, joinpath(job_dir, "config.toml"))
+        config_file = joinpath(job_dir, "config.toml")
+    else
+        # Single jobs on the cluster or on local machine
+        cp(joinpath(job_dir, "config_template.toml"), joinpath(job_dir, "config.toml"))
+        config_file = joinpath(job_dir, "config.toml")
+    end
 
-   return config_file
+    return config_file
 end
 
 function compute_combination(idx, combinations)
-   
-   lengths = map(length, combinations)
-   n = length(combinations)
+    
+    lengths = map(length, combinations)
+    n = length(combinations)
 
-   N_combinations = prod(lengths)
-   if N_combinations ≠ parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
-      @warn "Number of combinations ($(N_combinations)) does not match number of tasks ($(ENV["SLURM_ARRAY_TASK_COUNT"]))."
-   end
-   
-   # Compute indices of each array in combinations
-   remaining_idx = idx - 1  # Use 0-based index
-   indices = zeros(Int, n)
-   for k in 1:n
-       product_of_remaining_lengths = prod(lengths[k+1:end])  # product of lengths from k+1 to n
-       indices[k] = div(remaining_idx, product_of_remaining_lengths) + 1  # Calculate index for Aₖ
-       
-       remaining_idx = mod(remaining_idx, product_of_remaining_lengths)  # Update remaining index
-   end
-   
-   return indices
+    N_combinations = prod(lengths)
+    if N_combinations ≠ parse(Int, ENV["SLURM_ARRAY_TASK_COUNT"])
+        @warn "Number of combinations ($(N_combinations)) does not match number of tasks ($(ENV["SLURM_ARRAY_TASK_COUNT"]))."
+    end
+    
+    # Compute indices of each array in combinations
+    remaining_idx = idx - 1  # Use 0-based index
+    indices = zeros(Int, n)
+    for k in 1:n
+        product_of_remaining_lengths = prod(lengths[k+1:end])  # product of lengths from k+1 to n
+        indices[k] = div(remaining_idx, product_of_remaining_lengths) + 1  # Calculate index for Aₖ
+        
+        remaining_idx = mod(remaining_idx, product_of_remaining_lengths)  # Update remaining index
+    end
+    
+    return indices
 end

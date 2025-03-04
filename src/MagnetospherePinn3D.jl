@@ -31,6 +31,7 @@
         train_neural_network!,
         gpu_device,
         evaluate_subnetworks,
+        loss_function,
 
         # Variables
         α,
