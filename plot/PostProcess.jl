@@ -1,11 +1,11 @@
 function create_test_input(n_q, n_μ, n_ϕ, t1, params; use_θ = false)
 
-    q = reshape([q for ϕ in range(0, 2π, n_ϕ) for μ in range(-1+1e-2, 1-1e-2, n_μ) for q in range(0, 1, n_q)], 1, :)
-	μ = reshape([μ for ϕ in range(0, 2π, n_ϕ) for μ in range(-1+1e-2, 1-1e-2, n_μ) for q in range(0, 1, n_q)], 1, :)
-	ϕ = reshape([ϕ for ϕ in range(0, 2π, n_ϕ) for μ in range(-1+1e-2, 1-1e-2, n_μ) for q in range(0, 1, n_q)], 1, :)
+    q = reshape([q for ϕ in range(0, 2π, n_ϕ) for μ in range(-1+1e-2, 1-1e-2, n_μ) for q in range(1e-2, 1, n_q)], 1, :)
+	μ = reshape([μ for ϕ in range(0, 2π, n_ϕ) for μ in range(-1+1e-2, 1-1e-2, n_μ) for q in range(1e-2, 1, n_q)], 1, :)
+	ϕ = reshape([ϕ for ϕ in range(0, 2π, n_ϕ) for μ in range(-1+1e-2, 1-1e-2, n_μ) for q in range(1e-2, 1, n_q)], 1, :)
     
     if use_θ
-		θ = reshape([θ for ϕ in range(0, 2π, n_ϕ) for θ in range(1e-2, π - 1e-2, n_μ) for q in range(0, 1, n_q)], 1, :)
+		θ = reshape([θ for ϕ in range(0, 2π, n_ϕ) for θ in range(1e-2, π - 1e-2, n_μ) for q in range(1e-2, 1, n_q)], 1, :)
 		μ = cos.(θ)
 	end
 
@@ -67,6 +67,29 @@ function create_test(test_input, NN, Θ, st, params)
 	return q, μ, ϕ, t, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α, αS, Nr, Nθ, Nϕ, Nα
 end
 
+function load_gradrubin_data(output_path::String)
+
+    file = readdir(joinpath(output_path, "silo_output"), join=true)[end]
+    @info "Using $file"
+    
+    f = HDF5.h5open(file, "r")
+    r = f[read_attribute(f["r"], "silo").value0][]
+    θ = f[read_attribute(f["theta"], "silo").value0][]
+    φ = f[read_attribute(f["varphi"], "silo").value0][]
+    alpha = f[read_attribute(f["alpha"], "silo").value0][]
+    u_q = f[read_attribute(f["u_1"], "silo").value0][]
+    u_theta = f[read_attribute(f["u_2"], "silo").value0][]
+    u_phi = f[read_attribute(f["u_3"], "silo").value0][]
+    B_q = f[read_attribute(f["B_1"], "silo").value0][]
+    B_theta = f[read_attribute(f["B_2"], "silo").value0][]
+    B_phi = f[read_attribute(f["B_3"], "silo").value0][]
+
+    q = 1 ./ r
+    μ = cos.(θ)
+
+    return r, q, θ, μ, φ, alpha, u_q, u_theta, u_phi, B_q, B_theta, B_phi
+end
+
 function Bmag(q, μ, ϕ, Nr, Nθ, Nϕ, params)
 	
 	return .√(Br(q, μ, ϕ, Nr, params)[1].^2 .+ Bθ(q, μ, ϕ, Nθ)[1].^2 .+ Bϕ(q, μ, ϕ, Nϕ)[1].^2)
@@ -74,18 +97,18 @@ end
 
 function integrand(x, p)
 	q, μ, ϕ = x
-	tt, NN, Θ, st, params = p
+	t1, NN, Θ, st, params = p
 
-    Nr, Nθ, Nϕ, Nα = evaluate_subnetworks(q, μ, ϕ, tt[1], Θ, st, NN)
+    Nr, Nθ, Nϕ, Nα = evaluate_subnetworks(q, μ, ϕ, t1, Θ, st, NN)
 
 	return Bmag(q, μ, ϕ, Nr, Nθ, Nϕ, params).^2 ./ q.^4 ./ (8π)
 end
 
 function calculate_energy(t1, NN, Θ, st, params)
-	tt = t1 * ones(size(q))
+	# tt = t1 * ones(size(q))
 
     domain = ([0.0, -1, 0], [1, 1, 2π])
-	p = (tt, NN, Θ, st, params)
+	p = (t1, NN, Θ, st, params)
 	prob = IntegralProblem(integrand, domain, p)
 
 	energy = solve(prob, HCubatureJL(), reltol = 1e-7, abstol = 1e-7)

@@ -2,7 +2,6 @@ using MagnetospherePinn3D
 using JLD2
 using PrettyPrint
 using Dates
-using DelimitedFiles
 using Parameters
 using DifferentialEquations
 using Integrals
@@ -13,9 +12,11 @@ include("PostProcess.jl")
 dirs = filter(dir -> isdir(dir) && startswith(basename(dir), "ff3d") , readdir(abspath("../data"); join=true))
 # dirs = filter(dir -> isdir(dir) && startswith(basename(dir), "local") , readdir(abspath("../data"); join=true))
 
-# datadir = joinpath("../data", "hotspot_a0_1.5_l3_n50")
+# datadir = joinpath("../data", "hotspot_a0_1.5_l2_n30")
 # datadir = joinpath("../data", "ff3d_3145941")
-datadir = dirs[end]
+datadir = joinpath("../data", "ff3d_3155186", "48")
+
+# datadir = dirs[end-1]
 
 @info "Using data in $datadir"
 
@@ -33,15 +34,13 @@ n_μ = 40
 n_ϕ = 80
 t1 = 1.0
 
-test_input = create_test_input(n_q, n_μ, n_ϕ, t1, params; use_θ = false)
+test_input = create_test_input(n_q, n_μ, n_ϕ, t1, params; use_θ = true)
 
 q, μ, ϕ, t, 
 Br1, Bθ1, Bϕ1, α1, 
 ∇B, B∇α, αS,
 Nr, Nθ, Nϕ, Nα = create_test(test_input, NN, Θ_trained, st, params)
 Bmag1 = .√(Br1.^2 .+ Bθ1.^2 .+ Bϕ1.^2)
-
-
 
 const ϵ = ∛(eps())
 
@@ -53,20 +52,20 @@ qS2 = ones(size(q2))
 
 
 
-subnet_α = NN.layers[4]
-# Nα = subnet_α(vcat(q1, μ, cos.(ϕ), sin.(ϕ), t), Θ.layer_4, st.layer_4)[1]
-Nα_tplus = subnet_α(vcat(qS2, μ2, cos.(ϕ2), sin.(ϕ2), t2 .+ ϵ), Θ_trained.layer_4, st.layer_4)[1]
-Nα_tminus = subnet_α(vcat(qS2, μ2, cos.(ϕ2), sin.(ϕ2), t2 .- ϵ), Θ_trained.layer_4, st.layer_4)[1]
-dαS_dt = (α(qS2, μ2, ϕ2, t2 .+ ϵ, Nα_tplus, params) .- α(qS2, μ2, ϕ2, t2 .- ϵ, Nα_tminus, params)) ./ (2 .* ϵ)
+# subnet_α = NN.layers[4]
+# # Nα = subnet_α(vcat(q1, μ, cos.(ϕ), sin.(ϕ), t), Θ.layer_4, st.layer_4)[1]
+# Nα_tplus = subnet_α(vcat(qS2, μ2, cos.(ϕ2), sin.(ϕ2), t2 .+ ϵ), Θ_trained.layer_4, st.layer_4)[1]
+# Nα_tminus = subnet_α(vcat(qS2, μ2, cos.(ϕ2), sin.(ϕ2), t2 .- ϵ), Θ_trained.layer_4, st.layer_4)[1]
+# dαS_dt = (α(qS2, μ2, ϕ2, t2 .+ ϵ, Nα_tplus, params) .- α(qS2, μ2, ϕ2, t2 .- ϵ, Nα_tminus, params)) ./ (2 .* ϵ)
 
 
 
-αS_eq = calculate_αS_equation(μ2, ϕ2, t2, qS2, reshape(αS, size(dαS_dt)), dαS_dt)
-αS_eq = reshape(αS_eq, n_q, n_μ, n_ϕ)
-idx = argmax(abs.(αS_eq))
-αS[idx]
-μ[idx]
-ϕ[idx]
+# αS_eq = calculate_αS_equation(μ2, ϕ2, t2, qS2, reshape(αS, size(dαS_dt)), dαS_dt)
+# αS_eq = reshape(αS_eq, n_q, n_μ, n_ϕ)
+# idx = argmax(abs.(αS_eq))
+# αS[idx]
+# μ[idx]
+# ϕ[idx]
 # x = @. sqrt(1 - μ^2) / q * cos(ϕ)
 # y = @. sqrt(1 - μ^2) / q * sin(ϕ)
 # z = @. μ / q 
