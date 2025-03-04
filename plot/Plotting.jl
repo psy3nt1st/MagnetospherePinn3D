@@ -105,7 +105,7 @@ function plot_fieldlines(lscene, fieldlines, α_lines, params)
    end
 end
 
-function plot_magnetosphere_3d(fieldlines, α1, α_lines, params)
+function plot_magnetosphere_3d(fieldlines, α1, α_lines, params; plot_lines = true)
 	f = Figure()
 	lscene = LScene(f[1,1], show_axis=false)
 
@@ -114,8 +114,9 @@ function plot_magnetosphere_3d(fieldlines, α1, α_lines, params)
 				 , colorrange=(0, params.model.alpha0)
 				 )
 	cbar = Colorbar(f[1, 2], star)
-	plot_fieldlines(lscene, fieldlines, α_lines, params)  
-
+	if plot_lines
+		plot_fieldlines(lscene, fieldlines, α_lines, params)  
+    end
     # Adjust viewing angle
     zoom!(lscene.scene, cameracontrols(lscene.scene), 0.95)
     rotate_cam!(lscene.scene, Vec3f(0.5, 2.2, 0.0))
