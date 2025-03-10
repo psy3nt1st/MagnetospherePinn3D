@@ -118,12 +118,17 @@ function calculate_derivatives(q, μ, ϕ, t, q1, Θ, st, NN, params)
     Nr_ϕplus, Nθ_ϕplus, Nϕ_ϕplus, Nα_ϕplus = evaluate_subnetworks(q, μ, ϕ .+ ϵ, t, Θ, st, NN)
     Nr_ϕminus, Nθ_ϕminus, Nϕ_ϕminus, Nα_ϕminus = evaluate_subnetworks(q, μ, ϕ .- ϵ, t, Θ, st, NN)
 
-    # Calculate derivative of α wrt to t only at the surface q1
+    # Calculate derivatives of α only at the surface q1
     subnet_α = NN.layers[4]
-    # Nα = subnet_α(vcat(q1, μ, cos.(ϕ), sin.(ϕ), t), Θ.layer_4, st.layer_4)[1]
-    Nα_tplus = subnet_α(vcat(q1, μ, cos.(ϕ), sin.(ϕ), t .+ ϵ), Θ.layer_4, st.layer_4)[1]
-    Nα_tminus = subnet_α(vcat(q1, μ, cos.(ϕ), sin.(ϕ), t .- ϵ), Θ.layer_4, st.layer_4)[1]
-
+    NαS = subnet_α(vcat(q1, μ, cos.(ϕ), sin.(ϕ), t), Θ.layer_4, st.layer_4)[1]
+    NαS_tplus = subnet_α(vcat(q1, μ, cos.(ϕ), sin.(ϕ), t .+ ϵ), Θ.layer_4, st.layer_4)[1]
+    NαS_tminus = subnet_α(vcat(q1, μ, cos.(ϕ), sin.(ϕ), t .- ϵ), Θ.layer_4, st.layer_4)[1]
+    NαS_qplus = subnet_α(vcat(q1 .+ ϵ, μ, cos.(ϕ), sin.(ϕ), t), Θ.layer_4, st.layer_4)[1]
+    NαS_qminus = subnet_α(vcat(q1 .- ϵ, μ, cos.(ϕ), sin.(ϕ), t), Θ.layer_4, st.layer_4)[1]
+    NαS_μplus = subnet_α(vcat(q1, μ .+ ϵ, cos.(ϕ), sin.(ϕ), t), Θ.layer_4, st.layer_4)[1]
+    NαS_μminus = subnet_α(vcat(q1, μ .- ϵ, cos.(ϕ), sin.(ϕ), t), Θ.layer_4, st.layer_4)[1]
+    NαS_ϕplus = subnet_α(vcat(q1, μ, cos.(ϕ .+ ϵ), sin.(ϕ .+ ϵ), t), Θ.layer_4, st.layer_4)[1]
+    NαS_ϕminus = subnet_α(vcat(q1, μ, cos.(ϕ .- ϵ), sin.(ϕ .- ϵ), t), Θ.layer_4, st.layer_4)[1]
 
 	return ((Br(q .+ ϵ, μ, ϕ, Nr_qplus, params) .- Br(q .- ϵ, μ, ϕ, Nr_qminus, params)) ./ (2 .* ϵ),
             (Bθ(q .+ ϵ, μ, ϕ, Nθ_qplus) .- Bθ(q .- ϵ, μ, ϕ, Nθ_qminus)) ./ (2 .* ϵ),
@@ -137,7 +142,11 @@ function calculate_derivatives(q, μ, ϕ, t, q1, Θ, st, NN, params)
             (Bθ(q, μ, ϕ .+ ϵ, Nθ_ϕplus) .- Bθ(q, μ, ϕ .- ϵ, Nθ_ϕminus)) ./ (2 .* ϵ),
             (Bϕ(q, μ, ϕ .+ ϵ, Nϕ_ϕplus) .- Bϕ(q, μ, ϕ .- ϵ, Nϕ_ϕminus)) ./ (2 .* ϵ),
             (α(q, μ, ϕ .+ ϵ, t, Nα_ϕplus, params) .- α(q, μ, ϕ .- ϵ, t, Nα_ϕminus, params)) ./ (2 .* ϵ),
-            (α(q1, μ, ϕ, t .+ ϵ, Nα_tplus, params) .- α(q1, μ, ϕ, t .- ϵ, Nα_tminus, params)) ./ (2 .* ϵ)
+            (α(q1, μ, ϕ, t .+ ϵ, NαS_tplus, params) .- α(q1, μ, ϕ, t .- ϵ, NαS_tminus, params)) ./ (2 .* ϵ),
+            (α(q1 .+ ϵ2, μ, ϕ, t, NαS_qplus, params) .- 2 .* α(q1, μ, ϕ, t, NαS, params) .+ α(q1 .- ϵ2, μ, ϕ, t, NαS_qminus, params)) ./ ϵ2 ^ 2,
+            (α(q1, μ .+ ϵ, ϕ, t, NαS_μplus, params) .- α(q1, μ .- ϵ, ϕ, t, NαS_μminus, params)) ./ (2 .* ϵ),
+            (α(q1, μ .+ ϵ2, ϕ, t, NαS_μplus, params) .- 2 .* α(q1, μ, ϕ, t, NαS, params) .+ α(q1, μ .- ϵ2, ϕ, t, NαS_μminus, params)) ./ ϵ2 ^ 2,
+            (α(q1, μ, ϕ .+ ϵ2, t, NαS_ϕplus, params) .- 2 .* α(q1, μ, ϕ, t, NαS, params) .+ α(q1, μ, ϕ .- ϵ2, t, NαS_ϕminus, params)) ./ ϵ2 ^ 2
 		   )
 	
 end
@@ -167,8 +176,15 @@ function calculate_Bdotgradα(q, μ, ϕ, Br, Bθ, Bϕ, dα_dq, dα_dμ, dα_dϕ)
 	return @. -q^2 * Br * dα_dq - q * √(1 - μ^2) * Bθ * dα_dμ + q / √(1 - μ^2) * Bϕ * dα_dϕ
 end
 
-function calculate_αS_equation(μ, ϕ, t, q1, αS, dαS_dt)
+function calculate_αS_equation(μ, ϕ, t, q1, αS, dαS_dt, d2αS_dq2, dαS_dμ, d2αS_dμ2, d2αS_dϕ2)
 
-	return @. dαS_dt + αS
+    ∇2αS = @. #=q1^4 * d2αS_dq2 =# - 2 * q1^2 * μ * dαS_dμ + q1^2 * (1 - μ^2) * d2αS_dμ2 + q1^2 / (1 - μ^2) * d2αS_dϕ2
+
+    # cond = ∇2αS .== maximum(∇2αS)
+    # println("μ = $(μ[cond]), ϕ = $(ϕ[cond]), t = $(t[cond]), q1 = $(q1[cond]), dαS_dt = $(dαS_dt[cond]), d2αS_dq2 = $(d2αS_dq2[cond]), dαS_dμ = $(dαS_dμ[cond]), d2αS_dμ2 = $(d2αS_dμ2[cond]), d2αS_dϕ2 = $(d2αS_dϕ2[cond])")
+    # println(maximum(∇2αS), " ",  maximum(dαS_dt), " ",  maximum(d2αS_dq2), " ", maximum(dαS_dμ), " ", maximum(d2αS_dμ2), " ", maximum(d2αS_dϕ2))
+
+	# return @. dαS_dt - ∇2αS
+    return @. dαS_dt + αS
 end
 

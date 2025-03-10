@@ -5,7 +5,7 @@ using Dates
 using Parameters
 using DifferentialEquations
 using Integrals
-
+using Distributions
 include("PostProcess.jl")
 
 # Get path to data directory
@@ -14,9 +14,8 @@ dirs = filter(dir -> isdir(dir) && startswith(basename(dir), "ff3d") , readdir(a
 
 # datadir = joinpath("../data", "hotspot_a0_1.5_l2_n30")
 # datadir = joinpath("../data", "ff3d_3145941")
-datadir = joinpath("../data", "ff3d_3155186", "48")
-
-# datadir = dirs[end-1]
+# datadir = joinpath("../data", "ff3d_3155186", "48")
+datadir = dirs[end]
 
 @info "Using data in $datadir"
 
@@ -32,7 +31,7 @@ losses = load(joinpath(datadir, "losses_vs_iterations.jld2"), "losses")
 n_q = 80
 n_μ = 40
 n_ϕ = 80
-t1 = 1.0
+t1 = 0.1
 
 test_input = create_test_input(n_q, n_μ, n_ϕ, t1, params; use_θ = true)
 
@@ -49,26 +48,6 @@ q2 = reshape(q, 1, length(q))
 ϕ2 = reshape(ϕ, 1, length(ϕ))
 t2 = reshape(t, 1, length(t))
 qS2 = ones(size(q2))
-
-
-
-# subnet_α = NN.layers[4]
-# # Nα = subnet_α(vcat(q1, μ, cos.(ϕ), sin.(ϕ), t), Θ.layer_4, st.layer_4)[1]
-# Nα_tplus = subnet_α(vcat(qS2, μ2, cos.(ϕ2), sin.(ϕ2), t2 .+ ϵ), Θ_trained.layer_4, st.layer_4)[1]
-# Nα_tminus = subnet_α(vcat(qS2, μ2, cos.(ϕ2), sin.(ϕ2), t2 .- ϵ), Θ_trained.layer_4, st.layer_4)[1]
-# dαS_dt = (α(qS2, μ2, ϕ2, t2 .+ ϵ, Nα_tplus, params) .- α(qS2, μ2, ϕ2, t2 .- ϵ, Nα_tminus, params)) ./ (2 .* ϵ)
-
-
-
-# αS_eq = calculate_αS_equation(μ2, ϕ2, t2, qS2, reshape(αS, size(dαS_dt)), dαS_dt)
-# αS_eq = reshape(αS_eq, n_q, n_μ, n_ϕ)
-# idx = argmax(abs.(αS_eq))
-# αS[idx]
-# μ[idx]
-# ϕ[idx]
-# x = @. sqrt(1 - μ^2) / q * cos(ϕ)
-# y = @. sqrt(1 - μ^2) / q * sin(ϕ)
-# z = @. μ / q 
 
 @info "Test created"
 

@@ -71,3 +71,5 @@ test_loss, ls, r_eq, θ_eq, ϕ_eq, ∇B, B∇α, αS_eq = test_loss_function(vca
 # test_input[3][idc]
 
 println("test_loss = $test_loss, ls = $ls")
+
+

@@ -14,20 +14,11 @@ footprints = find_footprints(α1, Br1, μ, ϕ, α_range = [0.0, params.model.alp
 sol = integrate_fieldlines!(fieldlines, α_lines, footprints, t1, NN, Θ_trained, st, params)
 println("Number of fieldlines = ", length(fieldlines))
 
-plot_magnetosphere_3d(fieldlines, α1[end, :, :], α_lines, params)
+f = plot_magnetosphere_3d(fieldlines, α1[end, :, :], α_lines, params)
+# save(joinpath("figures", "twisted_magnetosphere.png"), f, update=false)
 
 θ = acos.(μ)
-plot_surface_α(θ[:,end:-1:1, :], ϕ, α1[end, :, :])
+# plot_surface_α(θ[:,end:-1:1, :], ϕ, α1[end, :, :])
 
-# plot_surface_α(μ, ϕ, αS_eq[end, :, :])
-# plot_surface_α(μ, ϕ, B∇α[end, :, :])
 
-# maximum(abs.(B∇α[:, :, :]))
-# argmax(abs.(B∇α[:, :, :]))
-
-# maximum(abs.(∇B))
-# argmax(abs.(∇B))
-
-# maximum(abs.(αS_eq[:, :, :]))
-# argmax(abs.(αS_eq[:, :, :]))
-# ;
+;

@@ -5,7 +5,7 @@ function create_test_input(n_q, n_μ, n_ϕ, t1, params; use_θ = false)
 	ϕ = reshape([ϕ for ϕ in range(0, 2π, n_ϕ) for μ in range(-1+1e-2, 1-1e-2, n_μ) for q in range(1e-2, 1, n_q)], 1, :)
     
     if use_θ
-		θ = reshape([θ for ϕ in range(0, 2π, n_ϕ) for θ in range(1e-2, π - 1e-2, n_μ) for q in range(1e-2, 1, n_q)], 1, :)
+		θ = reshape([θ for ϕ in range(0, 2π, n_ϕ) for θ in range(1e-1, π - 1e-1, n_μ) for q in range(1e-2, 1, n_q)], 1, :)
 		μ = cos.(θ)
 	end
 
@@ -42,7 +42,7 @@ function create_test(test_input, NN, Θ, st, params)
 	dBr_dq, dBθ_dq, dBϕ_dq, dα_dq, 
     dBr_dμ, dBθ_dμ, dBϕ_dμ, dα_dμ, 
     dBr_dϕ, dBθ_dϕ, dBϕ_dϕ, dα_dϕ, 
-    dαS_dt  = calculate_derivatives(q, μ, ϕ, t, q1, Θ, st, NN, params)
+    dαS_dt, d2αS_dq2, dαS_dμ, d2αS_dμ2, d2αS_dϕ2  = calculate_derivatives(q, μ, ϕ, t, q1, Θ, st, NN, params)
 
     ∇B = calculate_divergence(q, μ, ϕ, Br1, Bθ1, Bϕ1, dBr_dq, dBθ_dq, dBϕ_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ)
 	B∇α = calculate_Bdotgradα(q, μ, ϕ, Br1, Bθ1, Bϕ1, dα_dq, dα_dμ, dα_dϕ)

@@ -10,7 +10,8 @@ output_path = "/home/petros/phys/ff_magnetosphere/modules/gradrubin/Data/results
 r_gr, q_gr, θ_gr, μ_gr, ϕ_gr, α_gr, u_q_gr, u_theta_gr, u_phi_gr, Br_gr, Bθ_gr, Bϕ_gr = load_gradrubin_data(output_path)
 
 function plot_magnetosphere_3d_gr(α1)
-	f = Figure()
+	
+    f = Figure()
 	lscene = LScene(f[1,1], show_axis=false)
 
 	star = mesh!(lscene, Sphere(Point3(0, 0, 0), 1.0)

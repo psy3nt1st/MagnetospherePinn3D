@@ -12,7 +12,7 @@ function plot_losses(losses)
     
 	axislegend(ax1)
 	display(GLMakie.Screen(), f1)
-
+    save(joinpath("figures", "losses.png"), f1)
 end
 
 function plot_l2error(resolutions, l2errors)
@@ -64,7 +64,6 @@ function plot_l2_errors_vs_μ(μ, l2errors_vs_μ)
 
 	axislegend(ax, position = :lt, merge = true)
 	display(GLMakie.Screen(), fig)
-	
 end
 
 function plot_l2_errors_vs_ϕ(ϕ, l2errors_vs_ϕ)
@@ -82,10 +81,9 @@ function plot_l2_errors_vs_ϕ(ϕ, l2errors_vs_ϕ)
 
 	axislegend(ax, position = :lt, merge = true)
 	display(GLMakie.Screen(), fig)
-
 end
 
-function plot_line(lscene, sol, α_line, params)
+function plot_line(lscene, sol, α_line, cmap, params)
     
     q, μ, ϕ = sol[1,:], sol[2,:], sol[3,:]
     
@@ -93,35 +91,40 @@ function plot_line(lscene, sol, α_line, params)
     y = @. √(abs(1 - μ^2)) / q * sin(ϕ)
     z = @. μ / q
 
-    lines!(lscene, x, y, z, color=α_line, colormap=reverse(cgrad(:gist_heat, 100)), colorrange=(0, params.model.alpha0))
+    lines!(lscene, x, y, z, color=α_line, colormap=cmap, colorrange=(0.01, params.model.alpha0)
+            , lowclip=:silver, linewidth = 3)
    
 end
 
-function plot_fieldlines(lscene, fieldlines, α_lines, params)
+function plot_fieldlines(lscene, fieldlines, α_lines, cmap, params)
    for l in eachindex(fieldlines)
       sol = fieldlines[l]
       α_line = α_lines[l]
-      plot_line(lscene, sol, α_line, params)
+      plot_line(lscene, sol, α_line, cmap, params)
    end
 end
 
 function plot_magnetosphere_3d(fieldlines, α1, α_lines, params; plot_lines = true)
-	f = Figure()
+	    
+    f = Figure()
 	lscene = LScene(f[1,1], show_axis=false)
 
+    cmap = reverse(cgrad(:gist_heat, 100))
+    # cmap = cgrad(:beach, rev=true)
 	star = mesh!(lscene, Sphere(Point3(0, 0, 0), 1.0)
-				 , color=abs.(α1), colormap=reverse(cgrad(:gist_heat, 100)), interpolate=true
+				 , color=α1, colormap=cmap, interpolate=true
 				 , colorrange=(0, params.model.alpha0)
 				 )
 	cbar = Colorbar(f[1, 2], star)
 	if plot_lines
-		plot_fieldlines(lscene, fieldlines, α_lines, params)  
+		plot_fieldlines(lscene, fieldlines, α_lines, cmap, params)  
     end
     # Adjust viewing angle
-    zoom!(lscene.scene, cameracontrols(lscene.scene), 0.95)
+    zoom!(lscene.scene, cameracontrols(lscene.scene), 1.4)
     rotate_cam!(lscene.scene, Vec3f(0.5, 2.2, 0.0))
 	display(GLMakie.Screen(), f, update=false)
-	save(joinpath("figures", "fieldlines.png"), f, update=false)
+	save(joinpath("figures", "twisted_magnetosphere.png"), f, update=false)
+    return f
 end
 
 function plot_surface_α(μ, ϕ, α_surface)
@@ -131,7 +134,7 @@ function plot_surface_α(μ, ϕ, α_surface)
 	cbar = Colorbar(f[1, 2], cont)
 	tightlimits!(ax)
 	display(GLMakie.Screen(), f)
-	save(joinpath("figures", "surface_alpha.png"), f)
+	# save(joinpath("figures", "surface_alpha.png"), f)
 end
 
 
@@ -148,7 +151,7 @@ function plot_surface_dα_dt(μ, ϕ, dα_dt)
 						 )
 	tightlimits!(ax)
 	display(GLMakie.Screen(), f)
-	save(joinpath("figures", "surface_da_dt.png"), f)
+	# save(joinpath("figures", "surface_da_dt.png"), f)
 end
 
 function plot_surface_diffusive_term(μ, ϕ, diffusive_term)
@@ -165,7 +168,7 @@ function plot_surface_diffusive_term(μ, ϕ, diffusive_term)
 						 )
 	tightlimits!(ax)
 	display(GLMakie.Screen(), f)
-	save(joinpath("figures", "surface_diffusive_term.png"), f)
+	# save(joinpath("figures", "surface_diffusive_term.png"), f)
 end
 
 function plot_surface_advective_term(μ, ϕ, advective_term)
@@ -183,7 +186,7 @@ function plot_surface_advective_term(μ, ϕ, advective_term)
 						 )
 	tightlimits!(ax)
 	display(GLMakie.Screen(), f)
-	save(joinpath("figures", "surface_advective_term.png"), f)
+	# save(joinpath("figures", "surface_advective_term.png"), f)
 end
 
 function plot_surface_Br(μ, ϕ, Br1)
