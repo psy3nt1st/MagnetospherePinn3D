@@ -56,25 +56,25 @@ function setup_configfile(job_dir; combinations=[])
     # Array jobs on the cluster
     if "SLURM_ARRAY_TASK_ID" in keys(ENV)
         config_file_template = joinpath(job_dir, "config_template.toml")
-        params1 = import_params(config_file_template)
+        params = import_params(config_file_template)
         
         task_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
         indices = compute_combination(task_id, combinations)
 
-        params1.optimization.loss_function  = combinations[1][indices[1]]
-        params1.architecture.N_layers = combinations[2][indices[2]]
-        params1.architecture.N_neurons = combinations[3][indices[3]]
-        params1.architecture.N_points = combinations[4][indices[4]]
-        params1.optimization.quasiNewton_iters = combinations[5][indices[5]]
+        params.model.gamma = combinations[1][indices[1]]
+        params.architecture.rng_seed = combinations[2][indices[2]]
+        
+
+        # params1.architecture.q_distributiion = combinations[1][indices[1]]
+        # params1.optimization.loss_function  = combinations[2][indices[2]]
+        # params1.optimization.linesearch = combinations[3][indices[3]]
 
         @info "Running experiment with combination 
-        loss_function = $(params1.optimization.loss_function)
-        N_layers = $(params1.architecture.N_layers)
-        N_neurons = $(params1.architecture.N_neurons)
-        N_points = $(params1.architecture.N_points)
-        quasiNewton_iters = $(params1.optimization.quasiNewton_iters)"
+            γ = $(params.model.gamma)
+            rng_seed = $(params.architecture.rng_seed)
+        "
 
-        export_params(params1, joinpath(job_dir, "config.toml"))
+        export_params(params, joinpath(job_dir, "config.toml"))
         config_file = joinpath(job_dir, "config.toml")
     else
         # Single jobs on the cluster or on local machine

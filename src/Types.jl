@@ -5,23 +5,26 @@
 	N_output::Int = 1
 	activation::String = "tanh"
 	N_points::Int = 1000
+    q_distributiion::String = "beta"
 	rng_seed::Union{Nothing,Int} = 0
 end
 
 @option "optimization" mutable struct OptimizationParams
-	# N_points::Int = 1000
 	N_sets::Int = 5
 	adam_sets::Int = 1
 	adam_iters::Int = 500
 	quasiNewton_method::String = "BFGS"
 	quasiNewton_iters::Int = 500
+    linesearch::String = "StrongWolfe"
 	loss_function::String = "MSE"
+    loss_normalization::String = "q"
 end
 
 @option "model" mutable struct ModelParams
 	alpha_bc_mode::String = "hotspot"
 	br_bc_mode::String = "axisymmetric"
 	coef::Vector{Float64} = [1.0, 0.0, 0.0]
+    M::Float64 = 0.25
 	alpha0::Float64 = 1.5
 	theta1::Float64 = 45.0
 	phi1::Float64 = 180.0
@@ -30,12 +33,15 @@ end
 	theta1_b::Float64 = 45.0   
 	phi1_b::Float64 = 90.0
 	sigma_b::Float64 = 0.2
+    notation::String = "Pc_sigma_s"
 	Pc::Float64 = 0.3405074
-	s::Float64 = 2.0
-	sigma_gs::Float64 = 2.0
-	use_rc::Bool = false
+    sigma_gs::Float64 = 2.0
+    s::Float64 = 2.0
+    n::Float64 = 7
+    gamma::Float64 = 0.0
 	rc::Float64 = 3.35
-	t_final::Float64 = 1e-3
+	t_final::Float64 = 1.0
+    t::Float64 = 0.0
 end
 
 @option "Params" mutable struct Params
