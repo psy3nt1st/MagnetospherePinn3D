@@ -1,4 +1,4 @@
-function create_test_input(n_q, n_μ, n_ϕ, t1, params; use_θ = false)
+function create_test_input(n_q, n_μ, n_ϕ, params; use_θ = false)
 
     q = reshape([q for ϕ in range(0, 2π, n_ϕ) for μ in range(-1+1e-2, 1-1e-2, n_μ) for q in range(1e-2, 1, n_q)], 1, :)
 	μ = reshape([μ for ϕ in range(0, 2π, n_ϕ) for μ in range(-1+1e-2, 1-1e-2, n_μ) for q in range(1e-2, 1, n_q)], 1, :)
@@ -9,28 +9,13 @@ function create_test_input(n_q, n_μ, n_ϕ, t1, params; use_θ = false)
 		μ = cos.(θ)
 	end
 
-    if params.model.alpha_bc_mode == "diffusive"
-        t = t1 * ones(size(q))
-        q1 = ones(size(q))
-
-        return q, μ, ϕ, t, q1
-    else
-
-        return q, μ, ϕ
-    end
+    return q, μ, ϕ
 end
 
-function create_test(test_input, NN, Θ, st, params)
+function create_test(n_q, n_μ, n_ϕ, NN, Θ, st, params)
 	
-    if params.model.alpha_bc_mode == "diffusive" 
-        
-        q, μ, ϕ, t, q1 = test_input
-    else
-
-        q, μ, ϕ = test_input
-        t = zeros(size(q))
-        q1 = ones(size(q))
-    end
+    q, μ, ϕ = create_test_input(n_q, n_μ, n_ϕ, params, use_θ = true)
+    t = zeros(size(q))
 
 	Nr, Nθ, Nϕ, Nα = evaluate_subnetworks(q, μ, ϕ, t, Θ, st, NN)
 
@@ -41,12 +26,11 @@ function create_test(test_input, NN, Θ, st, params)
 
 	dBr_dq, dBθ_dq, dBϕ_dq, dα_dq, 
     dBr_dμ, dBθ_dμ, dBϕ_dμ, dα_dμ, 
-    dBr_dϕ, dBθ_dϕ, dBϕ_dϕ, dα_dϕ, 
-    dαS_dt, d2αS_dq2, dαS_dμ, d2αS_dμ2, d2αS_dϕ2  = calculate_derivatives(q, μ, ϕ, t, q1, Θ, st, NN, params)
+    dBr_dϕ, dBθ_dϕ, dBϕ_dϕ, dα_dϕ  = calculate_derivatives(q, μ, ϕ, t, Θ, st, NN, params)
 
-    ∇B = calculate_divergence(q, μ, ϕ, Br1, Bθ1, Bϕ1, dBr_dq, dBθ_dq, dBϕ_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ)
-	B∇α = calculate_Bdotgradα(q, μ, ϕ, Br1, Bθ1, Bϕ1, dα_dq, dα_dμ, dα_dϕ)
-    αS = α(q1, μ, ϕ, t, Nα, params)
+    ∇B = calculate_divergence(q, μ, Br1, Bθ1, dBr_dq, dBθ_dμ, dBϕ_dϕ, params)
+	B∇α = calculate_Bdotgradα(q, μ, Br1, Bθ1, Bϕ1, dα_dq, dα_dμ, dα_dϕ, params)
+    # αS = α(q1, μ, ϕ, t, Nα, params)
 
 	q = reshape(q, n_q, n_μ, n_ϕ)
 	μ = reshape(μ, n_q, n_μ, n_ϕ)
@@ -58,13 +42,44 @@ function create_test(test_input, NN, Θ, st, params)
 	Bϕ1 = reshape(Bϕ1, n_q, n_μ, n_ϕ)
 	∇B = reshape(∇B, n_q, n_μ, n_ϕ)
 	B∇α = reshape(B∇α, n_q, n_μ, n_ϕ)
-    αS = reshape(αS, n_q, n_μ, n_ϕ)
 	Nr = reshape(Nr, n_q, n_μ, n_ϕ)
 	Nθ = reshape(Nθ, n_q, n_μ, n_ϕ)
 	Nϕ = reshape(Nϕ, n_q, n_μ, n_ϕ)
 	Nα = reshape(Nα, n_q, n_μ, n_ϕ)
 
-	return q, μ, ϕ, t, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α, αS, Nr, Nθ, Nϕ, Nα
+	return q, μ, ϕ, t, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α, Nr, Nθ, Nϕ, Nα
+end
+
+function run_test(datadir)
+
+    @info "Using data in $datadir"
+
+    params = import_params(joinpath(datadir, "config.toml"))
+
+    # Create neural network
+    NN, _, st = create_neural_network(params, test_mode=true)
+
+    Θ_trained = load(joinpath(datadir, "trained_model.jld2"), "Θ_trained")
+    losses = load(joinpath(datadir, "losses_vs_iterations.jld2"), "losses")
+
+    # Create test grid
+    n_q = 80
+    n_μ = 40
+    n_ϕ = 80
+
+    # test_input = create_test_input(n_q, n_μ, n_ϕ, params; use_θ = true)
+
+    q, μ, ϕ, t, 
+    Br1, Bθ1, Bϕ1, α1, 
+    ∇B, B∇α,
+    Nr, Nθ, Nϕ, Nα = create_test(n_q, n_μ, n_ϕ, NN, Θ_trained, st, params)
+    
+    Bmag1 = .√(Br1.^2 .+ Bθ1.^2 .+ Bϕ1.^2)
+    θ = acos.(μ)
+
+    @info "Test created"
+
+    return NN, Θ_trained, st, losses, q, μ, ϕ, t, θ, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α, Nr, Nθ, Nϕ, Nα, Bmag1, params
 end
 
 function load_gradrubin_data(output_path::String)
@@ -92,28 +107,71 @@ end
 
 function Bmag(q, μ, ϕ, Nr, Nθ, Nϕ, params)
 	
-	return .√(Br(q, μ, ϕ, Nr, params)[1].^2 .+ Bθ(q, μ, ϕ, Nθ)[1].^2 .+ Bϕ(q, μ, ϕ, Nϕ)[1].^2)
+	return √(Br(q, μ, ϕ, Nr, params)[1]^2 + Bθ(q, μ, ϕ, Nθ)[1]^2 + Bϕ(q, μ, ϕ, Nϕ)[1]^2)
 end
 
-function integrand(x, p)
+function energy_density(x, p)
 	q, μ, ϕ = x
 	t1, NN, Θ, st, params = p
 
     Nr, Nθ, Nϕ, Nα = evaluate_subnetworks(q, μ, ϕ, t1, Θ, st, NN)
 
-	return Bmag(q, μ, ϕ, Nr, Nθ, Nϕ, params).^2 ./ q.^4 ./ (8π)
+	return Bmag(q, μ, ϕ, Nr, Nθ, Nϕ, params)^2 / q^4 / (8π)
 end
 
 function calculate_energy(t1, NN, Θ, st, params)
 	# tt = t1 * ones(size(q))
 
-    domain = ([0.0, -1, 0], [1, 1, 2π])
+    domain = ([0, -1, 0], [1, 1, 2π])
 	p = (t1, NN, Θ, st, params)
-	prob = IntegralProblem(integrand, domain, p)
+	prob = IntegralProblem(energy_density, domain, p)
 
-	energy = solve(prob, HCubatureJL(), reltol = 1e-7, abstol = 1e-7)
+	sol = solve(prob, HCubatureJL(), reltol = 1e-5, abstol = 1e-5)
 
-	return energy.u
+	return sol.u
+end
+
+function toroidal_energy_density(x, p)
+	q, μ, ϕ = x
+	t1, NN, Θ, st, params = p
+
+    Nr, Nθ, Nϕ, Nα = evaluate_subnetworks(q, μ, ϕ, t1, Θ, st, NN)
+
+	return Bϕ(q, μ, ϕ, Nϕ)[1]^2 / q^4 / (8π)
+end
+
+function calculate_toroidal_energy(t1, NN, Θ, st, params)
+	# tt = t1 * ones(size(q))
+
+    domain = ([0, -1, 0], [1, 1, 2π])
+	p = (t1, NN, Θ, st, params)
+	prob = IntegralProblem(toroidal_energy_density, domain, p)
+
+	sol = solve(prob, HCubatureJL(), reltol = 1e-5, abstol = 1e-5)
+
+	return sol.u
+end
+
+function magnetic_virial_integrand(x, p)
+    q = 1
+    μ, ϕ = x
+	t1, NN, Θ, st, params = p
+
+    Nr, Nθ, Nϕ, Nα = evaluate_subnetworks(q, μ, ϕ, t1, Θ, st, NN)
+
+    
+	return Br(q, μ, ϕ, Nr, params)[1]^2 - Bθ(q, μ, ϕ, Nθ)[1]^2 - Bϕ(q, μ, ϕ, Nϕ)[1]^2
+end
+
+function calculate_magnetic_virial(t1, NN, Θ, st, params)
+    
+    domain = ([-1, 0], [1, 2π])
+	p = (t1, NN, Θ, st, params)
+	prob = IntegralProblem(magnetic_virial_integrand, domain, p)
+
+	sol = solve(prob, HCubatureJL(), reltol = 1e-5, abstol = 1e-5)
+
+	return sol.u
 end
 
 function find_footprints(α1, Br1, μ, ϕ; α_range = 0.0, Br1_range = 0.0, μ_range = 0.7)
@@ -225,4 +283,75 @@ end
 function findnearest(A::AbstractArray, t) 
    
    return A[findmin(x -> abs.(x .- t), A)[2]]
+end
+
+function load_losses(dir)
+    
+    # last_losses = Array{Float64}(undef, length(run_dirs))
+    # for dir in run_dirs
+        if isfile(joinpath(dir, "losses_vs_iterations.jld2"))
+            all_losses = load(joinpath(dir, "losses_vs_iterations.jld2"), "losses")
+            if !isempty(all_losses)
+                total_loss = all_losses[1]
+                if !all(isnan.(total_loss))
+                    last_loss = filter(!isnan, total_loss)[end]
+                else
+                    last_loss = NaN
+                end
+            else
+                last_loss = NaN
+            end
+        else
+            last_loss = NaN
+        end
+    # end
+        
+    return last_loss
+end
+
+function read_time(dir)
+    if isfile(joinpath(dir, "execution_time.txt"))
+        open((joinpath(dir, "execution_time.txt")), "r") do f
+            data = readdlm(f, '\t')
+            total_time = parse(Float64, data[2][1:25])
+            return total_time
+        end
+    else
+        return 0.0
+    end
+end
+
+function load_run_data(run_dirs)
+
+    run_configs = [joinpath(dir, "config.toml") for dir in run_dirs]
+    run_params = [import_params(config) for config in run_configs]
+    losses = [load_losses(dir) for dir in run_dirs]
+    NNs = [create_neural_network(params, test_mode=true)[1] for params in run_params]
+    sts = [create_neural_network(params, test_mode=true)[3] for params in run_params]
+    Θs = [isfile(joinpath(dir, "trained_model.jld2")) ? load(joinpath(dir, "trained_model.jld2"), "Θ_trained") : [] for dir in run_dirs]
+    times = [read_time(dir) for dir in run_dirs]
+
+    return run_params, losses, NNs, sts, Θs, times
+end
+
+function calculate_run_quantities(run_dirs, NNs, Θs, sts, run_params)
+    
+    t1 = 0
+    energies = [calculate_energy(t1, NNs[i], Θs[i], sts[i], run_params[i]) for i in eachindex(run_dirs)]
+    dipole_energy = energies[1]
+    excess_energies = (energies .- dipole_energy)
+    relative_excess_energies = excess_energies / dipole_energy
+    toroidal_energies = [calculate_toroidal_energy(t1, NNs[i], Θs[i], sts[i], run_params[i]) for i in eachindex(run_dirs)]
+    poloidal_energies = energies .- toroidal_energies
+    excess_poloidal_energies = (poloidal_energies .- poloidal_energies[1])
+    relative_excess_poloidal_energies = excess_poloidal_energies / poloidal_energies[1]
+    magnetic_virials = [calculate_magnetic_virial(t1, NNs[i], Θs[i], sts[i], run_params[i]) for i in eachindex(run_dirs)]
+    Pcs = [params.model.Pc for params in run_params]
+    Ms = [params.model.M for params in run_params]
+    ns = [params.model.n for params in run_params]
+    gammas = [params.model.gamma for params in run_params]
+
+    return (energies, excess_energies, relative_excess_energies,
+        poloidal_energies, excess_poloidal_energies, relative_excess_poloidal_energies,
+        toroidal_energies, magnetic_virials, Ms, Pcs, ns, gammas)
 end

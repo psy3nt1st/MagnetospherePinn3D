@@ -1,61 +1,82 @@
 using MagnetospherePinn3D
 using JLD2
-using PrettyPrint
 using Dates
 using Parameters
 using DifferentialEquations
 using Integrals
 using Distributions
+using NaturalSort
+
 include("PostProcess.jl")
 
 # Get path to data directory
 dirs = filter(dir -> isdir(dir) && startswith(basename(dir), "ff3d") , readdir(abspath("../data"); join=true))
 # dirs = filter(dir -> isdir(dir) && startswith(basename(dir), "local") , readdir(abspath("../data"); join=true))
 
+rundirs = sort(filter(dir -> isdir(dir), readdir(abspath(dirs[end]); join=true, sort=false)), lt=natural)
+
 # datadir = joinpath("../data", "hotspot_a0_1.5_l2_n30")
 # datadir = joinpath("../data", "ff3d_3145941")
-# datadir = joinpath("../data", "ff3d_3155186", "48")
-datadir = dirs[end]
+# datadir = dirs[end]
+datadir = rundirs[1]
+# datadir = dirs[end]
 
-@info "Using data in $datadir"
+NN, Θ_trained, st, losses, q, μ, ϕ, t, θ, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α, Nr, Nθ, Nϕ, Nα, Bmag1, params = run_test(datadir)
 
-params = import_params(joinpath(datadir, "config.toml"))
-
-# Create neural network
-NN, _, st = create_neural_network(params, test_mode=true)
-
-Θ_trained = load(joinpath(datadir, "trained_model.jld2"), "Θ_trained")
-losses = load(joinpath(datadir, "losses_vs_iterations.jld2"), "losses")
-
-# Create test grid
-n_q = 80
-n_μ = 40
-n_ϕ = 80
-t1 = 0.1
-
-test_input = create_test_input(n_q, n_μ, n_ϕ, t1, params; use_θ = true)
-
-q, μ, ϕ, t, 
-Br1, Bθ1, Bϕ1, α1, 
-∇B, B∇α, αS,
-Nr, Nθ, Nϕ, Nα = create_test(test_input, NN, Θ_trained, st, params)
-Bmag1 = .√(Br1.^2 .+ Bθ1.^2 .+ Bϕ1.^2)
-
-const ϵ = ∛(eps())
-
-q2 = reshape(q, 1, length(q))
-μ2 = reshape(μ, 1, length(μ))
-ϕ2 = reshape(ϕ, 1, length(ϕ))
-t2 = reshape(t, 1, length(t))
-qS2 = ones(size(q2))
-
-@info "Test created"
+# println("t = ", params.model.t)
 
 # Calculate energy
-energy = calculate_energy(t1, NN, Θ_trained, st, params)
+energy = calculate_energy(t[1], NN, Θ_trained, st, params)
 println("Energy = ", energy)
 
+dipole_energy = 1/3 * (1 + 5 / 2 * params.model.M)
+excess_energy = (energy - dipole_energy) / dipole_energy
+println("Excess energy = ", excess_energy) 
+
 # Calculate max Bϕ ratio
-max_Bϕ_ratio = maximum(Bϕ1[Bmag1 .!= 0] ./ Bmag1[Bmag1 .!= 0])
+max_Bϕ_ratio = maximum(abs.(Bϕ1[Bmag1 .!= 0]) ./ Bmag1[Bmag1 .!= 0])
 println("Max Bϕ ratio = ", max_Bϕ_ratio)
 
+magnetic_virial = calculate_magnetic_virial(t[1], NN, Θ_trained, st, params)
+println("Magnetic virial = ", magnetic_virial)
+
+# println("σ = $(params.model.sigma_gs), gamma = $(params.model.gamma), z = $(params.model.z)")
+
+
+# using MagnetospherePinn3D: α
+
+# function MagnetospherePinn3D.α(
+#     q::AbstractArray,
+#     μ::AbstractArray,
+#     ϕ::AbstractArray,
+#     t::AbstractArray,
+#     NN::Any,
+#     Θ::AbstractArray,
+#     st::NamedTuple,
+#     params::Params
+#     )
+
+#     subnet_α = NN.layers[4]
+#     Nα = subnet_α(vcat(q, μ, cos.(ϕ), sin.(ϕ), t), Θ.layer_4, st.layer_4)[1]
+
+#     return @. q * ($α_surface(μ, ϕ, params) + $h_boundary(q, μ, ϕ, t, params) * Nα)
+# end
+# α
+
+# # @btime α(q, μ, ϕ, t, Nα, params);
+
+# q1 = reshape(q, 1, :)
+# μ1 = reshape(μ, 1, :)
+# ϕ1 = reshape(ϕ, 1, :)
+# t1 = zero(q1)
+# # @btime α(q1, μ1, ϕ1, t1, NN, Θ_trained, st, params);
+
+# function calculate_∂α∂q(q, μ, ϕ, t, NN, Θ_trained, st, params)
+
+#     ϵ = ∛(eps()) 
+    
+#     return  (α(q .+ ϵ, μ, ϕ, t, NN, Θ_trained, st, params) .- α(q .- ϵ, μ, ϕ, t, NN, Θ_trained, st, params)) / (2 * ϵ)
+
+# end
+
+# ∂α∂q = calculate_∂α∂q(q1, μ1, ϕ1, t1, NN, Θ_trained, st, params)
