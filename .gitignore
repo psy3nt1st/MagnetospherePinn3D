@@ -36,3 +36,9 @@ src/ff3d_testing.jl
 
 # Configuration file
 config_template.toml
+
+# Playground directory with obsolete code and testing scripts
+/playground
+
+# Initial weights file
+initial_weights.jld2

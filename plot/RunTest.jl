@@ -1,83 +1,101 @@
 using MagnetospherePinn3D
 using JLD2
-using PrettyPrint
 using Dates
-using DelimitedFiles
 using Parameters
 using DifferentialEquations
 using Integrals
+using Distributions
+using NaturalSort
 
 include("PostProcess.jl")
 
 # Get path to data directory
 dirs = filter(dir -> isdir(dir) && startswith(basename(dir), "ff3d") , readdir(abspath("../data"); join=true))
-# dirs = filter(dir -> isdir(dir) && startswith(basename(dir), "local") , readdir(abspath("../data"); join=true))
+# datadir = dirs[end-1]
+# datadir = "../data/gamma_sequence"
+# datadir = "../data/alpha0_sequence"
+datadir = "../data/alphamax_sequence_axisymmetric"
+# datadir = "../data/alphamax_sequence_3d"
 
-# datadir = joinpath("../data", "hotspot_a0_1.5_l3_n50")
-# datadir = joinpath("../data", "ff3d_3145941")
-datadir = dirs[end]
+rundirs = sort(filter(dir -> isdir(dir), readdir(abspath(datadir); join=true, sort=false)), lt=natural)
 
-@info "Using data in $datadir"
-
-params = import_params(joinpath(datadir, "config.toml"))
-
-# Create neural network
-NN, _, st = create_neural_network(params, test_mode=true)
-
-Θ_trained = load(joinpath(datadir, "trained_model.jld2"), "Θ_trained")
-losses = load(joinpath(datadir, "losses_vs_iterations.jld2"), "losses")
-
-# Create test grid
-n_q = 80
-n_μ = 40
-n_ϕ = 80
-t1 = 1.0
-
-test_input = create_test_input(n_q, n_μ, n_ϕ, t1, params; use_θ = false)
-
-q, μ, ϕ, t, 
-Br1, Bθ1, Bϕ1, α1, 
-∇B, B∇α, αS,
-Nr, Nθ, Nϕ, Nα = create_test(test_input, NN, Θ_trained, st, params)
-Bmag1 = .√(Br1.^2 .+ Bθ1.^2 .+ Bϕ1.^2)
-
-
-
-const ϵ = ∛(eps())
-
-q2 = reshape(q, 1, length(q))
-μ2 = reshape(μ, 1, length(μ))
-ϕ2 = reshape(ϕ, 1, length(ϕ))
-t2 = reshape(t, 1, length(t))
-qS2 = ones(size(q2))
-
-
-
-subnet_α = NN.layers[4]
-# Nα = subnet_α(vcat(q1, μ, cos.(ϕ), sin.(ϕ), t), Θ.layer_4, st.layer_4)[1]
-Nα_tplus = subnet_α(vcat(qS2, μ2, cos.(ϕ2), sin.(ϕ2), t2 .+ ϵ), Θ_trained.layer_4, st.layer_4)[1]
-Nα_tminus = subnet_α(vcat(qS2, μ2, cos.(ϕ2), sin.(ϕ2), t2 .- ϵ), Θ_trained.layer_4, st.layer_4)[1]
-dαS_dt = (α(qS2, μ2, ϕ2, t2 .+ ϵ, Nα_tplus, params) .- α(qS2, μ2, ϕ2, t2 .- ϵ, Nα_tminus, params)) ./ (2 .* ϵ)
-
-
-
-αS_eq = calculate_αS_equation(μ2, ϕ2, t2, qS2, reshape(αS, size(dαS_dt)), dαS_dt)
-αS_eq = reshape(αS_eq, n_q, n_μ, n_ϕ)
-idx = argmax(abs.(αS_eq))
-αS[idx]
-μ[idx]
-ϕ[idx]
-# x = @. sqrt(1 - μ^2) / q * cos(ϕ)
-# y = @. sqrt(1 - μ^2) / q * sin(ϕ)
-# z = @. μ / q 
-
-@info "Test created"
+rundir = rundirs[3]
+# rundir = dirs[end-3]
+for rundir in rundirs
+    if !isfile(joinpath(rundir, "run_data.jld2"))
+        @info "Running test in $rundir"
+        NN, Θ_trained, st, losses, q, μ, ϕ, t, θ, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α, Nr, Nθ, Nϕ, Nα, Bmag1, params = run_test(rundir)
+        save_test(rundir, NN, Θ_trained, st, losses, q, μ, ϕ, t, θ, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α, Nr, Nθ, Nϕ, Nα, Bmag1, params)
+    else
+        @info "Loading test data from $rundir"
+        NN, Θ_trained, st, losses, q, μ, ϕ, t, θ, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α, Nr, Nθ, Nϕ, Nα, Bmag1, params = load_test(rundir)
+    end
+end
 
 # Calculate energy
-energy = calculate_energy(t1, NN, Θ_trained, st, params)
+energy = calculate_energy(t[1], NN, Θ_trained, st, params)
 println("Energy = ", energy)
 
+dipole_energy = calculate_dipole_energy(params.model.M)
+println("Dipole energy = ", dipole_energy)
+
+excess_energy = (energy - dipole_energy) / dipole_energy
+println("Excess energy = ", excess_energy) 
+
 # Calculate max Bϕ ratio
-max_Bϕ_ratio = maximum(Bϕ1[Bmag1 .!= 0] ./ Bmag1[Bmag1 .!= 0])
+max_Bϕ_ratio = maximum(abs.(Bϕ1[Bmag1 .!= 0]) ./ Bmag1[Bmag1 .!= 0])
 println("Max Bϕ ratio = ", max_Bϕ_ratio)
 
+magnetic_virial_surface = calculate_magnetic_virial_surface(t[1], NN, Θ_trained, st, params)
+magnetic_virial_volume = calculate_magnetic_virial_volume(t[1], NN, Θ_trained, st, params)
+magnetic_virial = magnetic_virial_surface + magnetic_virial_volume
+println("Magnetic virial = ", magnetic_virial)
+
+quadrupole_moment = calculate_quadrupole_moment(t[1], NN, Θ_trained, st, params)
+println("Quadrupole moment = ", quadrupole_moment)
+
+println("M = $(params.model.M)")
+println("α0 = $(params.model.alpha0)")
+# println("γ = $(params.model.gamma)")
+println("σ = $(params.model.sigma)")
+println("θ1 = $(params.model.theta1)")
+println("coef = $(params.model.coef)")
+println("loss = $(losses[1][end])")
+abs(magnetic_virial - energy) / energy
+# using MagnetospherePinn3D: α
+
+# function MagnetospherePinn3D.α(
+#     q::AbstractArray,
+#     μ::AbstractArray,
+#     ϕ::AbstractArray,
+#     t::AbstractArray,
+#     NN::Any,
+#     Θ::AbstractArray,
+#     st::NamedTuple,
+#     params::Params
+#     )
+
+#     subnet_α = NN.layers[4]
+#     Nα = subnet_α(vcat(q, μ, cos.(ϕ), sin.(ϕ), t), Θ.layer_4, st.layer_4)[1]
+
+#     return @. q * ($α_surface(μ, ϕ, params) + $h_boundary(q, μ, ϕ, t, params) * Nα)
+# end
+# α
+
+# # @btime α(q, μ, ϕ, t, Nα, params);
+
+# q1 = reshape(q, 1, :)
+# μ1 = reshape(μ, 1, :)
+# ϕ1 = reshape(ϕ, 1, :)
+# t1 = zero(q1)
+# # @btime α(q1, μ1, ϕ1, t1, NN, Θ_trained, st, params);
+
+# function calculate_∂α∂q(q, μ, ϕ, t, NN, Θ_trained, st, params)
+
+#     ϵ = ∛(eps()) 
+    
+#     return  (α(q .+ ϵ, μ, ϕ, t, NN, Θ_trained, st, params) .- α(q .- ϵ, μ, ϕ, t, NN, Θ_trained, st, params)) / (2 * ϵ)
+
+# end
+
+# ∂α∂q = calculate_∂α∂q(q1, μ1, ϕ1, t1, NN, Θ_trained, st, params)

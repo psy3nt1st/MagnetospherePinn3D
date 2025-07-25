@@ -46,14 +46,19 @@ end
 
 function generate_input(params)
 
-	# Generate random values for `q`, `μ`, and `ϕ`
-	q = rand(Uniform(0.05, 1), (1, params.architecture.N_points))
+    if params.architecture.q_distributiion == "uniform"
+        q_distributiion = Uniform(0, 1)
+    elseif params.architecture.q_distributiion == "beta"
+        q_distributiion = Beta(3, 1)
+	end
+
+    # Generate random values for `q`, `μ`, and `ϕ`
+    q = rand(q_distributiion, (1, params.architecture.N_points))
 	μ = rand(Uniform(-1, 1), (1, params.architecture.N_points))
 	ϕ = rand(Uniform(0, 2π), (1, params.architecture.N_points))
     t = rand(Uniform(0, params.model.t_final), (1, params.architecture.N_points))
-    q1 = ones(1, params.architecture.N_points)
 
-	input = vcat(q, μ, ϕ, t, q1) |> gpu_device() .|> Float64
+	input = vcat(q, μ, ϕ, t) |> gpu_device() .|> Float64
 
 	return input
 end
@@ -64,41 +69,62 @@ function loss_function(input, Θ, st, NN, params)
 	μ = @view input[2:2,:]
 	ϕ = @view input[3:3,:]
     t = @view input[4:4,:]
-    q1 = @view input[5:5,:]
 
 	# Calculate derivatives
 	dBr_dq, dBθ_dq, dBϕ_dq, dα_dq, 
     dBr_dμ, dBθ_dμ, dBϕ_dμ, dα_dμ, 
-    dBr_dϕ, dBθ_dϕ, dBϕ_dϕ, dα_dϕ, 
-    dαS_dt  = calculate_derivatives(q, μ, ϕ, t, q1, Θ, st, NN, params)
+    dBr_dϕ, dBθ_dϕ, dBϕ_dϕ, dα_dϕ = calculate_derivatives(q, μ, ϕ, t, Θ, st, NN, params)
 	
     Nr, Nθ, Nϕ, Nα = evaluate_subnetworks(q, μ, ϕ, t, Θ, st, NN)
-    subnet_α = NN.layers[4]
-    Nα_S = subnet_α(vcat(q1, μ, cos.(ϕ), sin.(ϕ), t), Θ.layer_4, st.layer_4)[1]
+    # subnet_α = NN.layers[4]
+    # Nα_S = subnet_α(vcat(q1, μ, cos.(ϕ), sin.(ϕ), t), Θ.layer_4, st.layer_4)[1]
 
 	Br1 = Br(q, μ, ϕ, Nr, params)
 	Bθ1 = Bθ(q, μ, ϕ, Nθ)
 	Bϕ1 = Bϕ(q, μ, ϕ, Nϕ)
 	α1 = α(q, μ, ϕ, t, Nα, params)
-    αS = α(q1, μ, ϕ, t, Nα_S, params)
+    # αS = α(q1, μ, ϕ, t, Nα_S, params)
 
-	r_eq = calculate_r_equation(q, μ, ϕ, Br1, Bθ1, Bϕ1, α1, dBr_dq, dBθ_dq, dBϕ_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ)
-	θ_eq = calculate_θ_equation(q, μ, ϕ, Br1, Bθ1, Bϕ1, α1, dBr_dq, dBθ_dq, dBϕ_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ)
-	ϕ_eq = calculate_ϕ_equation(q, μ, ϕ, Br1, Bθ1, Bϕ1, α1, dBr_dq, dBθ_dq, dBϕ_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ)
+    B_mag = @. √(Br1 ^ 2 + Bθ1 ^ 2 + Bϕ1 ^ 2)
 
-	∇B = calculate_divergence(q, μ, ϕ, Br1, Bθ1, Bϕ1, dBr_dq, dBθ_dq, dBϕ_dq, dBr_dμ, dBθ_dμ, dBϕ_dμ, dBr_dϕ, dBθ_dϕ, dBϕ_dϕ)
-	B∇α = calculate_Bdotgradα(q, μ, ϕ, Br1, Bθ1, Bϕ1, dα_dq, dα_dμ, dα_dϕ) 
+	r_eq = calculate_r_equation(q, μ, Br1, Bϕ1, α1, dBϕ_dμ, dBθ_dϕ, params)
+	θ_eq = calculate_θ_equation(q, μ, Bθ1, Bϕ1, α1, dBϕ_dq, dBr_dϕ, params)
+	ϕ_eq = calculate_ϕ_equation(q, μ, Bθ1, Bϕ1, α1, dBθ_dq, dBr_dμ, params)
+	∇B = calculate_divergence(q, μ, Br1, Bθ1, dBr_dq, dBθ_dμ, dBϕ_dϕ, params)
+	B∇α = calculate_Bdotgradα(q, μ, Br1, Bθ1, Bϕ1, dα_dq, dα_dμ, dα_dϕ, params) 
 
-    αS_eq = calculate_αS_equation(μ, ϕ, t, q1, αS, dαS_dt)
+    # αS_eq = calculate_αS_equation(μ, ϕ, t, q1, αS, dαS_dt, d2αS_dq2, dαS_dμ, d2αS_dμ2, d2αS_dϕ2)
 
 	# Calculate loss
-	l1 = sum(abs2, r_eq ./ q .^ 4)
-	l2 = sum(abs2, θ_eq ./ q .^ 4)
-	l3 = sum(abs2, ϕ_eq ./ q .^ 4)
-	l4 = sum(abs2, .√(1 .- μ .^ 2) .* ∇B ./ q .^ 4)
-	l5 = sum(abs2, B∇α)
-    l6 = sum(abs2, αS_eq)
-	ls = [l1, l2, l3, l4, l5, l6] ./ params.architecture.N_points 
+    if params.optimization.loss_normalization == "q"
+        l1 = sum(abs2, r_eq ./ q .^ 4)
+        l2 = sum(abs2, θ_eq ./ q .^ 4)
+        l3 = sum(abs2, ϕ_eq ./ q .^ 4)
+        l4 = sum(abs2, ∇B  .* .√(1 .- μ .^ 2) ./ q .^ 4)
+        l5 = sum(abs2, B∇α .* .√(1 .- μ .^ 2))
+    elseif params.optimization.loss_normalization == "B"
+
+        l1 = sum(abs2, r_eq ./ B_mag)
+        l2 = sum(abs2, θ_eq ./ B_mag)
+        l3 = sum(abs2, ϕ_eq ./ B_mag)
+        l4 = sum(abs2, ∇B .* .√(1 .- μ .^ 2) ./ B_mag)
+        l5 = sum(abs2, B∇α .* .√(1 .- μ .^ 2))
+
+    elseif params.optimization.loss_normalization == "none"
+        
+        l1 = sum(abs2, r_eq)
+        l2 = sum(abs2, θ_eq)
+        l3 = sum(abs2, ϕ_eq)
+        l4 = sum(abs2, ∇B)
+        l5 = sum(abs2, B∇α)
+    end
+
+    # if params.model.alpha_bc_mode == "diffusive"
+    #     l6 = sum(abs2, αS_eq)
+    #     ls = [l1, l2, l3, l4, l5, l6] ./ params.architecture.N_points  
+    # else
+    ls = [l1, l2, l3, l4, l5] ./ params.architecture.N_points 
+    # end
 
 	if params.optimization.loss_function == "MSE"
 		g = identity
@@ -109,9 +135,11 @@ function loss_function(input, Θ, st, NN, params)
 		g = identity
 	end
 
-    
-	return g((l1 + l2 + l3 + l4 + l5 + l6) / params.architecture.N_points), ls
-	# return g((l1 + l2 + l3 + l4 + l5) / params.architecture.N_points), ls
+    # if params.model.alpha_bc_mode == "diffusive"
+        # return g((l1 + l2 + l3 + l4 + l5 + l6) / params.architecture.N_points), ls
+    # else
+    return g((l1 + l2 + l3 + l4 + l5) / params.architecture.N_points), ls
+    # end
 
 end
 
@@ -154,7 +182,18 @@ end
 function train!(result, optprob, losses, invH, job_dir, params)
 
 	# Initialise the inverse Hessian
-	initial_invH = nothing
+	initial_invH = nothing   
+
+    # Select linesearch method
+    if params.optimization.linesearch == "HagerZhang"
+        linesearch = LineSearches.HagerZhang()
+    elseif params.optimization.linesearch == "MoreThuente"
+        linesearch = LineSearches.MoreThuente()
+    elseif params.optimization.linesearch == "BackTracking"
+        linesearch = LineSearches.BackTracking()
+    elseif params.optimization.linesearch == "StrongWolfe"
+        linesearch = LineSearches.StrongWolfe()
+    end
 
 	for i in 1:params.optimization.N_sets
 		
@@ -165,13 +204,13 @@ function train!(result, optprob, losses, invH, job_dir, params)
 			maxiters = params.optimization.adam_iters
 		else
 			if params.optimization.quasiNewton_method == "BFGS"
-				optimizer=BFGS(linesearch=LineSearches.StrongWolfe(), initial_invH=initial_invH)
+				optimizer=BFGS(linesearch=linesearch, initial_invH=initial_invH)
 				opt_label = "BFGS"
 			elseif params.optimization.quasiNewton_method == "SSBFGS"
-				optimizer=SSBFGS(linesearch=LineSearches.StrongWolfe(), initial_invH=initial_invH)
+				optimizer=SSBFGS(linesearch=linesearch, initial_invH=initial_invH)
 				opt_label = "SSBFGS"
 			elseif params.optimization.quasiNewton_method == "SSBroyden"
-				optimizer=SSBroyden(linesearch=LineSearches.StrongWolfe(), initial_invH=initial_invH)
+				optimizer=SSBroyden(linesearch=linesearch, initial_invH=initial_invH)
 				opt_label = "SSBroyden"
 			end
 
@@ -179,17 +218,18 @@ function train!(result, optprob, losses, invH, job_dir, params)
 		end
 
 		# Set up the progress bar
-		prog = Progress(maxiters, desc="$opt_label set $i / $(params.optimization.N_sets)", dt=0.1, showspeed=true, start=1) 
+		prog = Progress(maxiters, desc="Set $i/$(params.optimization.N_sets) $opt_label", dt=0.1, showspeed=true, start=1) 
 		
 		# Train
 		input = generate_input(params)
 		optprob = remake(optprob, u0 = result.u, p = input)
-		result = Optimization.solve(optprob,
-                                    optimizer,
-                                    callback = (p, l, ls) -> callback(p, l, ls, losses, prog, invH, params),
-                                    maxiters = maxiters,
-                                    extended_trace = true
-                                   )
+		result = Optimization.solve(
+            optprob,
+            optimizer,
+            callback = (p, l, ls) -> callback(p, l, ls, losses, prog, invH, params),
+            maxiters = maxiters,
+            extended_trace = true
+        )
 	
 		finish!(prog)
 

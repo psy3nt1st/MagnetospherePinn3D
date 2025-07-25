@@ -31,6 +31,8 @@
         train_neural_network!,
         gpu_device,
         evaluate_subnetworks,
+        loss_function,
+        create_subnet,
 
         # Variables
         α,
@@ -42,6 +44,7 @@
         # Boundary_conditions
         α_surface,
         Br_surface,
+        h_boundary,
 
         # File management
         setup_jobdir,
