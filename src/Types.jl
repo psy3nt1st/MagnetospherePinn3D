@@ -18,6 +18,8 @@ end
     linesearch::String = "StrongWolfe"
 	loss_function::String = "MSE"
     loss_normalization::String = "q"
+    initialize_weights_from_previous::Bool = false
+    initialize_weights_from_file::Bool = false
 end
 
 @option "model" mutable struct ModelParams

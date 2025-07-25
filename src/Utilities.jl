@@ -61,17 +61,18 @@ function setup_configfile(job_dir; combinations=[])
         task_id = parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
         indices = compute_combination(task_id, combinations)
 
-        params.model.gamma = combinations[1][indices[1]]
-        params.architecture.rng_seed = combinations[2][indices[2]]
-        
+        # params.model.alpha0 = combinations[1][indices[1]]
+        # params.model.sigma = combinations[1][indices[1]]
+        # params.model.M = combinations[2][indices[2]]
+        # params.architecture.rng_seed = combinations[2][indices[2]]
+        params.model.coef = combinations[1][indices[1]]
 
         # params1.architecture.q_distributiion = combinations[1][indices[1]]
         # params1.optimization.loss_function  = combinations[2][indices[2]]
         # params1.optimization.linesearch = combinations[3][indices[3]]
 
-        @info "Running experiment with combination 
-            γ = $(params.model.gamma)
-            rng_seed = $(params.architecture.rng_seed)
+        @info "Running experiment with combination
+            coef= $(params.model.coef)
         "
 
         export_params(params, joinpath(job_dir, "config.toml"))
