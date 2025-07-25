@@ -22,7 +22,9 @@ function Br_surface(μ, ϕ, params)
 
         M = params.model.M
 
-        return @. (-3 / (8 * M^3)) * 2 * μ * (log(1 - 2 * M) + 2 * M + (2 * M)^2 / 2)
+        # return @. coef[1] * (-3 / (8 * M^3)) * 2 * μ * (log(1 - 2 * M) + 2 * M + (2 * M)^2 / 2) + coef[2] * 1 / (16 * M^4) * (3 * μ^2 - 1) * ((4 - 6 * M) * log(1 - 2 * M) + 8 * M - 4 * M^2 - 4 * M^3 / 3)
+        return @. coef[1] * (-3 / (8 * M^3)) * 2 * μ * (log(1 - 2 * M) + 2 * M + (2 * M)^2 / 2) + coef[2] * 5 / (8 * M^5) * (3 * μ^2 - 1) * ((6 * M - 4) * log(1 - 2 * M) - 8 * M + 4 * M^2 + 4 * M^3 / 3)
+
     end
         # end
 end
