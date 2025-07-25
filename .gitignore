@@ -39,3 +39,4 @@ config_template.toml
 
 # Playground directory with obsolete code and testing scripts
 /playground
+initial_weights.jld2
