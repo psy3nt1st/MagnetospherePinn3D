@@ -52,8 +52,6 @@ end
 
 function run_test(datadir)
 
-    @info "Using data in $datadir"
-
     params = import_params(joinpath(datadir, "config.toml"))
 
     # Create neural network
@@ -63,9 +61,9 @@ function run_test(datadir)
     losses = load(joinpath(datadir, "losses_vs_iterations.jld2"), "losses")
 
     # Create test grid
-    n_q = 80
-    n_μ = 40
-    n_ϕ = 80
+    n_q = 160
+    n_μ = 80
+    n_ϕ = 160
 
     # test_input = create_test_input(n_q, n_μ, n_ϕ, params; use_θ = true)
 
@@ -80,6 +78,61 @@ function run_test(datadir)
     @info "Test created"
 
     return NN, Θ_trained, st, losses, q, μ, ϕ, t, θ, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α, Nr, Nθ, Nϕ, Nα, Bmag1, params
+end
+
+function save_test(rundir, NN, Θ_trained, st, losses, q, μ, ϕ, t, θ, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α, Nr, Nθ, Nϕ, Nα, Bmag1, params)
+    save_dict = Dict(
+        "NN" => NN,
+        "Theta" => Θ_trained,
+        "st" => st,
+        "losses" => losses,
+        "q" => q,
+        "mu" => μ,
+        "phi" => ϕ,
+        "t" => t,
+        "theta" => θ,
+        "Br" => Br1,
+        "Btheta" => Bθ1,
+        "Bphi" => Bϕ1,
+        "alpha" => α1,
+        "divB" => ∇B,
+        "BdotGradAlpha" => B∇α,
+        "Nr" => Nr,
+        "Ntheta" => Nθ,
+        "Nphi" => Nϕ,
+        "Nalpha" => Nα,
+        "Bmag" => Bmag1,
+        "params" => params
+    )
+
+    jldsave(joinpath(rundir, "run_data.jld2"); save_dict)
+end
+
+function load_test(rundir::String)
+    dict = load(joinpath(rundir, "run_data.jld2"))["save_dict"]
+    return (
+        NN = dict["NN"],
+        Θ_trained = dict["Theta"],
+        st = dict["st"],
+        losses = dict["losses"],
+        q = dict["q"],
+        μ = dict["mu"],
+        ϕ = dict["phi"],
+        t = dict["t"],
+        θ = dict["theta"],
+        Br1 = dict["Br"],
+        Bθ1 = dict["Btheta"],
+        Bϕ1 = dict["Bphi"],
+        α1 = dict["alpha"],
+        ∇B = dict["divB"],
+        B∇α = dict["BdotGradAlpha"],
+        Nr = dict["Nr"],
+        Nθ = dict["Ntheta"],
+        Nϕ = dict["Nphi"],
+        Nα = dict["Nalpha"],
+        Bmag1 = dict["Bmag"],
+        params = dict["params"]
+    )
 end
 
 function load_gradrubin_data(output_path::String)
@@ -110,7 +163,7 @@ function Bmag(q, μ, ϕ, Nr, Nθ, Nϕ, params)
 	return √(Br(q, μ, ϕ, Nr, params)[1]^2 + Bθ(q, μ, ϕ, Nθ)[1]^2 + Bϕ(q, μ, ϕ, Nϕ)[1]^2)
 end
 
-function energy_density(x, p)
+function energy_integrand(x, p)
 	q, μ, ϕ = x
 	t1, NN, Θ, st, params = p
 
@@ -124,14 +177,14 @@ function calculate_energy(t1, NN, Θ, st, params)
 
     domain = ([0, -1, 0], [1, 1, 2π])
 	p = (t1, NN, Θ, st, params)
-	prob = IntegralProblem(energy_density, domain, p)
+	prob = IntegralProblem(energy_integrand, domain, p)
 
-	sol = solve(prob, HCubatureJL(), reltol = 1e-5, abstol = 1e-5)
-
+	# sol = solve(prob, HCubatureJL(), reltol = 1e-5, abstol = 1e-5, maxiters = 10000)
+	sol = solve(prob, HCubatureJL(), reltol = 1e-5, abstol = 1e-5, maxiters = 10000)
 	return sol.u
 end
 
-function toroidal_energy_density(x, p)
+function toroidal_energy_integrand(x, p)
 	q, μ, ϕ = x
 	t1, NN, Θ, st, params = p
 
@@ -145,36 +198,82 @@ function calculate_toroidal_energy(t1, NN, Θ, st, params)
 
     domain = ([0, -1, 0], [1, 1, 2π])
 	p = (t1, NN, Θ, st, params)
-	prob = IntegralProblem(toroidal_energy_density, domain, p)
+	prob = IntegralProblem(toroidal_energy_integrand, domain, p)
 
-	sol = solve(prob, HCubatureJL(), reltol = 1e-5, abstol = 1e-5)
+	sol = solve(prob, HCubatureJL(), reltol = 1e-5, abstol = 1e-5, maxiters = 10000)
 
 	return sol.u
 end
 
-function magnetic_virial_integrand(x, p)
+function magnetic_virial_surface_integrand(x, p)
     q = 1
     μ, ϕ = x
 	t1, NN, Θ, st, params = p
 
     Nr, Nθ, Nϕ, Nα = evaluate_subnetworks(q, μ, ϕ, t1, Θ, st, NN)
 
-    
-	return Br(q, μ, ϕ, Nr, params)[1]^2 - Bθ(q, μ, ϕ, Nθ)[1]^2 - Bϕ(q, μ, ϕ, Nϕ)[1]^2
+    gr_factor = √(1 - 2 * params.model.M * q)
+
+	return gr_factor^2 * (Br(q, μ, ϕ, Nr, params)[1]^2 - Bθ(q, μ, ϕ, Nθ)[1]^2 - Bϕ(q, μ, ϕ, Nϕ)[1]^2) / (8π)
 end
 
-function calculate_magnetic_virial(t1, NN, Θ, st, params)
+
+function calculate_magnetic_virial_surface(t1, NN, Θ, st, params)
     
     domain = ([-1, 0], [1, 2π])
 	p = (t1, NN, Θ, st, params)
-	prob = IntegralProblem(magnetic_virial_integrand, domain, p)
+	prob = IntegralProblem(magnetic_virial_surface_integrand, domain, p)
 
-	sol = solve(prob, HCubatureJL(), reltol = 1e-5, abstol = 1e-5)
+	sol = solve(prob, HCubatureJL(), reltol = 1e-5, abstol = 1e-5, maxiters = 10000)
 
 	return sol.u
 end
 
-function find_footprints(α1, Br1, μ, ϕ; α_range = 0.0, Br1_range = 0.0, μ_range = 0.7)
+function magnetic_virial_volume_integrand(x, p)
+    q, μ, ϕ = x
+    t1, NN, Θ, st, params = p
+
+    Nr, Nθ, Nϕ, Nα = evaluate_subnetworks(q, μ, ϕ, t1, Θ, st, NN)
+
+    gr_factor = √(1 - 2 * params.model.M * q)
+
+    return (1 - gr_factor^2) * (2 * Br(q, μ, ϕ, Nr, params)[1]^2 + Bθ(q, μ, ϕ, Nθ)[1]^2 + Bϕ(q, μ, ϕ, Nϕ)[1]^2) / (8π * q^4)
+
+end
+
+function calculate_magnetic_virial_volume(t1, NN, Θ, st, params)
+    
+    domain = ([0, -1, 0], [1, 1, 2π])
+    p = (t1, NN, Θ, st, params)
+    prob = IntegralProblem(magnetic_virial_volume_integrand, domain, p)
+
+    sol = solve(prob, HCubatureJL(), reltol = 1e-5, abstol = 1e-5, maxiters = 10000)
+
+    return sol.u
+end
+
+function quadrupole_moment_integrand(x, p)
+	q, μ, ϕ = x
+	t1, NN, Θ, st, params = p
+
+    Nr, Nθ, Nϕ, Nα = evaluate_subnetworks(q, μ, ϕ, t1, Θ, st, NN)
+
+	return Bmag(q, μ, ϕ, Nr, Nθ, Nϕ, params)^2 / q^6 / (8π) * (cos(ϕ)^2 * (1 - μ^2) - μ^2)
+end
+
+function calculate_quadrupole_moment(t1, NN, Θ, st, params)
+	# tt = t1 * ones(size(q))
+
+    domain = ([0, -1, 0], [1, 1, 2π])
+	p = (t1, NN, Θ, st, params)
+	prob = IntegralProblem(quadrupole_moment_integrand, domain, p)
+
+	# sol = solve(prob, HCubatureJL(), reltol = 1e-5, abstol = 1e-5, maxiters = 10000)
+	sol = solve(prob, HCubatureJL(), reltol = 1e-5, abstol = 1e-5, maxiters = 10000)
+	return sol.u
+end
+
+function find_footprints(α1, Br1, μ, ϕ; α_range = 0.0, Br1_range = 0.0, μ_range = 0.7, ϕ_range = [π], r_idx  = 160)
 	ϕs = Float64[]
 	μs = Float64[]
 
@@ -185,11 +284,21 @@ function find_footprints(α1, Br1, μ, ϕ; α_range = 0.0, Br1_range = 0.0, μ_r
         α_range = [findnearest(α1, α_range), findnearest(α1, α_range)]
     end
 
+    ϕ_range = [findnearest(ϕ, _ϕ) for _ϕ in ϕ_range]
+
+    # r_idx = argmin(abs.(r .- 1.5))
+    r_idx = 160
 	for k in range(1, size(μ, 3))
 		for j in range(1, size(μ, 2))
-			if α_range[1] ≤ α1[end, j, k] ≤ α_range[2] && Br1[end, j, k] > Br1_range && μ_range[1] ≤ μ[end, j, k] ≤ μ_range[2]
-				push!(μs, μ[end, j, k])
-				push!(ϕs, ϕ[end, j, k])
+			if (
+                α_range[1] ≤ α1[r_idx, j, k] ≤ α_range[2] &&
+                Br1[r_idx, j, k] > Br1_range &&
+                μ_range[1] ≤ μ[r_idx, j, k] ≤ μ_range[2] &&
+                ϕ[r_idx, j, k] in ϕ_range
+            )
+
+				push!(μs, μ[r_idx, j, k])
+				push!(ϕs, ϕ[r_idx, j, k])
 			end
 		end
 	end
@@ -229,7 +338,7 @@ function stop_at_negative_ϕ(u, t, integrator)
 	return u[3] - 0.0
 end
 
-function integrate_fieldlines!(fieldlines, α_lines, footprints, t1, NN, Θ, st, params)
+function integrate_fieldlines!(fieldlines, α_lines, footprints, t1, NN, Θ, st, params; q_start = 1.0)
    
     affect!(integrator) = terminate!(integrator)
     cb1 = ContinuousCallback(stop_at_surface, affect!)
@@ -237,26 +346,26 @@ function integrate_fieldlines!(fieldlines, α_lines, footprints, t1, NN, Θ, st,
     cb3 = ContinuousCallback(stop_at_negative_ϕ, affect!)
     cb = CallbackSet(cb1, cb2, cb3)
 
-    u0 = [1.0; 0.0; 0.0]
+    u0 = [q_start; 0.0; 0.0]
     
     # q1 = ones(size(q))
     # tt = t1 * ones(size(q))
     p = (t1, NN, Θ, st, params)
-    tspan = (0.0, 50.0)
+    tspan = (0.0, 150.0)
     prob = ODEProblem(field_line_equations!, u0, tspan, p)
 
     for (μ, ϕ) in footprints
         # println("Integrating for μ = $μ, ϕ = $ϕ")
-        u0 = [1.0; μ; ϕ]
+        u0 = [q_start; μ; ϕ]
         prob = remake(prob, u0 = u0)
-        sol = solve(prob, alg = Tsit5(), callback=cb, abstol=1e-8, reltol=1e-8)
+        sol = solve(prob, alg = Tsit5(), callback=cb, abstol=1e-12, reltol=1e-12)
         α_line = caluclate_α_along_line(sol, t1, Θ, st, NN, params)
         
         push!(α_lines, α_line)
         push!(fieldlines, sol)
     end
 
-	sol = solve(prob, alg = Tsit5(), callback=cb, abstol=1e-8, reltol=1e-8)
+	sol = solve(prob, alg = Tsit5(), callback=cb, abstol=1e-12, reltol=1e-12)
 
 	return sol
 end
@@ -334,24 +443,40 @@ function load_run_data(run_dirs)
     return run_params, losses, NNs, sts, Θs, times
 end
 
-function calculate_run_quantities(run_dirs, NNs, Θs, sts, run_params)
+function calculate_dipole_energy(M)
+
+    if M == 0
+        return 1/3
+    else
+        return (3 / (32 * M^6)) * (2M * (M + 1) + log(1 - 2M)) * (2M * (M - 1) + (2M - 1) * log(1 - 2M))
+    end
+end
+
+
+function calculate_run_quantities(NNs, Θs, sts, run_params)
     
+    Ms = [params.model.M for params in run_params]
     t1 = 0
-    energies = [calculate_energy(t1, NNs[i], Θs[i], sts[i], run_params[i]) for i in eachindex(run_dirs)]
-    dipole_energy = energies[1]
-    excess_energies = (energies .- dipole_energy)
-    relative_excess_energies = excess_energies / dipole_energy
-    toroidal_energies = [calculate_toroidal_energy(t1, NNs[i], Θs[i], sts[i], run_params[i]) for i in eachindex(run_dirs)]
+    @info "Calculating energies"
+    energies = [calculate_energy(t1, NNs[i], Θs[i], sts[i], run_params[i]) for i in eachindex(run_params)]
+    dipole_energies = [calculate_dipole_energy(Ms[i]) for i in eachindex(run_params)]
+    # dipole_energies = ifelse.(Ms .== 0.0, 1/3, ifelse.(Ms .== 0.1, 0.4376881279484205, ifelse.(Ms .== 0.25, 0.7438769955308882, NaN)))
+    excess_energies = (energies .- dipole_energies)
+    relative_excess_energies = excess_energies ./ dipole_energies
+    @info "Calculating toroidal energies"
+    toroidal_energies = [calculate_toroidal_energy(t1, NNs[i], Θs[i], sts[i], run_params[i]) for i in eachindex(run_params)]
     poloidal_energies = energies .- toroidal_energies
     excess_poloidal_energies = (poloidal_energies .- poloidal_energies[1])
     relative_excess_poloidal_energies = excess_poloidal_energies / poloidal_energies[1]
-    magnetic_virials = [calculate_magnetic_virial(t1, NNs[i], Θs[i], sts[i], run_params[i]) for i in eachindex(run_dirs)]
-    Pcs = [params.model.Pc for params in run_params]
-    Ms = [params.model.M for params in run_params]
-    ns = [params.model.n for params in run_params]
-    gammas = [params.model.gamma for params in run_params]
+    @info "Calculating magnetic virials"
+    magnetic_virials_surface = [calculate_magnetic_virial_surface(t1, NNs[i], Θs[i], sts[i], run_params[i]) for i in eachindex(run_params)]
+    magnetic_virials_volume = [calculate_magnetic_virial_volume(t1, NNs[i], Θs[i], sts[i], run_params[i]) for i in eachindex(run_params)]
+    magnetic_virials = magnetic_virials_surface .+ magnetic_virials_volume
+    @info "Calculating quadrupole moments"
+    quadrupole_moments = [calculate_quadrupole_moment(t1, NNs[i], Θs[i], sts[i], run_params[i]) for i in eachindex(run_params)]
 
     return (energies, excess_energies, relative_excess_energies,
         poloidal_energies, excess_poloidal_energies, relative_excess_poloidal_energies,
-        toroidal_energies, magnetic_virials, Ms, Pcs, ns, gammas)
+        toroidal_energies, magnetic_virials_surface, magnetic_virials_volume, magnetic_virials,
+        quadrupole_moments)
 end
