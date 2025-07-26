@@ -4,20 +4,14 @@
 # VScode folder
 /.vscode
 
-# Backup copies of Manifest and Project
-/Manifest (copy).toml
-/Project (copy).toml
-
 # Auxiliary directories with redundant code
 /misc
-/outdated
 
 # Contents of data directory
 /data/*
-!/data/.gitkeep
 
 # Generated figures
-/plot/figures/*
+/plots/figures/*
 
 # Slurm submission script
 /run_ff3d.slurm
@@ -25,20 +19,11 @@
 # Slurm output files
 slurm*.out
 
-# Scratch file for obsolete lines of code
-scratch.jl
-
-# Copy of driver script for fast testing
-src/ff3d_testing.jl
-
 # Safety copies
 *_bkp*
 
 # Configuration file
 config_template.toml
-
-# Playground directory with obsolete code and testing scripts
-/playground
 
 # Initial weights file
 initial_weights.jld2

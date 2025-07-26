@@ -9,6 +9,7 @@
     using LuxCUDA
     using LineSearches
     using OptimizationOptimJL
+    using OrderedCollections
     using Parameters
     using Printf
     using ProgressMeter
@@ -21,18 +22,21 @@
         Params,  
         
         # Packages
+        Distributions,
         Lux,  
         Random, 
+
+        # Configuration function
+        create_config,
 
         # Neural network functions
         generate_input, 
         create_neural_network, 
         setup_optprob,
-        train_neural_network!,
+        train_pinn!,
         gpu_device,
         evaluate_subnetworks,
         loss_function,
-        create_subnet,
 
         # Variables
         α,
@@ -69,6 +73,7 @@
         calculate_gradB2,
         calculate_αS_equation
 
+    include("Config.jl")
     include("Equations.jl")
     include("Trainning.jl")
     include("Types.jl")
