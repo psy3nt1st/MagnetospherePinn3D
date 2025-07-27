@@ -4,6 +4,7 @@
     using Configurations
     using Dates
     using Distributions
+    using DrWatson
     using JLD2
     using Lux
     using LuxCUDA

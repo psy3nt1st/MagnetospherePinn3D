@@ -140,15 +140,17 @@ function setup_optprob(NN, Θ, st, config)
 	optf = Optimization.OptimizationFunction((Θ, input) -> loss_function(input, NN, Θ, st, config), 
         Optimization.AutoZygote())
 	optprob = Optimization.OptimizationProblem(optf, Θ, input)
-	result = Optimization.solve(optprob, Adam(), maxiters = 1)
+	optresult = Optimization.solve(optprob, Adam(), maxiters = 1)
 
-	return optprob, result
+	return optresult, optprob
 end
  
 
-function train_pinn!(result, optprob, losses, invH, job_dir, config)
+function train_pinn!(optresult, optprob, losses, invH, config)
 
     @unpack N_sets, adam_sets, adam_iters, quasiNewton_method, quasiNewton_iters, linesearch, keep_checkpoints = config
+    
+    simdata = copy(config)
 
 	# Initialise the inverse Hessian
 	initial_invH = nothing   
@@ -180,8 +182,8 @@ function train_pinn!(result, optprob, losses, invH, job_dir, config)
 		
 		# Train
 		input = generate_input(config)
-		optprob = remake(optprob, u0 = result.u, p = input)
-		result = Optimization.solve(
+		optprob = remake(optprob, u0 = optresult.u, p = input)
+		optresult = Optimization.solve(
             optprob,
             optimizer,
             callback = (p, l, ls) -> callback(p, l, ls, losses, prog, invH, config),
@@ -196,19 +198,21 @@ function train_pinn!(result, optprob, losses, invH, job_dir, config)
 			initial_invH = begin x -> invH[] end
 		end
 
-        # Save check point
-        Θ_trained = result.u |> Lux.cpu_device()
-        
-        @save joinpath(job_dir, "trained_model.jld2") Θ_trained
-        @save joinpath(job_dir, "losses_vs_iterations.jld2") losses
+        # Store the results
+        simdata[:Θ] = optresult.u |> Lux.cpu_device()
+        simdata[:losses] = losses
+        simdata[:optresult] = optresult
 
-        if keep_checkpoints
-            checkpoints_dir = mkpath(joinpath(job_dir, "checkpoints"))
+        # @save joinpath(job_dir, "trained_model.jld2") Θ_trained
+        # @save joinpath(job_dir, "losses_vs_iterations.jld2") losses
+
+        # if keep_checkpoints
+        #     checkpoints_dir = mkpath(joinpath(job_dir, "checkpoints"))
             
-            @save joinpath(checkpoints_dir, "trained_model_$i.jld2") Θ_trained
-            @save joinpath(checkpoints_dir, "losses_vs_iterations_$i.jld2") losses
-        end
+        #     @save joinpath(checkpoints_dir, "trained_model_$i.jld2") Θ_trained
+        #     @save joinpath(checkpoints_dir, "losses_vs_iterations_$i.jld2") losses
+        # end
 	end
    
-	return result
+	return simdata
 end

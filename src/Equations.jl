@@ -1,7 +1,7 @@
 function Br_surface(μ, ϕ, config)
 	
 	@unpack multipoles_bl, compactness = config
-    b1, b2, b3 = only(multipoles_bl)
+    b1, b2, b3 = multipoles_bl
 
     if compactness == 0
 

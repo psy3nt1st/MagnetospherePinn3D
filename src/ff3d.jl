@@ -10,29 +10,39 @@ using OrderedCollections
 # include("Config.jl")
 const config = create_config()
 @info "Using configuration:"
-pprintln(config)
+# pprintln(config)
 
-function main1(config)
+function main(config)
 
     @info "Creating neural network"
     NN, Θ, st = create_neural_network(config)
 
-    @info "Generating input data"
-    input = generate_input(config)
-
     @info "Setting up optimization problem"
-    optprob, result = setup_optprob(NN, Θ, st, config)
+    optresult, optprob = setup_optprob(NN, Θ, st, config)
 
     @info "Training neural network"
-    job_dir = setup_jobdir()
     invH = Base.RefValue{AbstractArray{Float64, 2}}()
     losses = [Float64[] for _ in 1:6]
-    result = train_pinn!(result, optprob, losses, invH, job_dir, config)
+    simdata = train_pinn!(optresult, optprob, losses, invH, config)
 
-    return NN, Θ, st, input, optprob, result
+    return simdata
 end
 
-NN, Θ, st, input, optprob, result = main1(config)
+# config1 = create_config()
+configs = dict_list(config)
+expanded_keys = filter(k -> config[k] isa Vector && (length(config[k]) > 1), keys(config))
+jobdir = setup_jobdir()
+for c in configs
+
+    @info "Running main function with configuration:"
+    println([k => c[k] for k in expanded_keys if k in keys(config)])
+    simdata = main(c)
+    tagsave(joinpath(jobdir, savename(c, "jld2"; accesses=[k for k in expanded_keys if k in keys(c)])), simdata)
+    
+end
+
+
+# NN, Θ, st, input, optprob, result = main1(config)
 
 # println(result)
 
