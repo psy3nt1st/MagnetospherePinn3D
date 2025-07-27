@@ -1,5 +1,22 @@
 function setup_jobdir()
     
+    # Jobs on the cluster
+    if "SLURM_JOB_NAME" in keys(ENV)
+        jobid = ENV["SLURM_JOB_ID"]
+        jobdir = joinpath("data", "$cluster_$(jobid)")
+        mkpath(jobdir)
+
+    # Jobs on local machine
+    else
+        jobdir = "data/local_$(Dates.format(now(), "yyyy_mm_dd_HH_MM_SS"))"
+        mkpath(jobdir)
+    end
+
+    return jobdir
+end
+
+function setup_jobdir2()
+    
     # Jobs ran on the cluster
     if "SLURM_JOB_NAME" in keys(ENV)
         job_name = ENV["SLURM_JOB_NAME"]
