@@ -1,24 +1,45 @@
 using GLMakie
 using LaTeXStrings
-using ColorSchemes
+# using ColorSchemes
 using JLD2
 using NaturalSort
 using MagnetospherePinn3D
 using DifferentialEquations
 using Integrals
+using DrWatson
+using DataFrames
 
 include("Plotting.jl")
 include("PostProcess.jl")
 
 # Get path to data directory
-dirs = filter(dir -> isdir(dir) && startswith(basename(dir), "ff3d") , readdir(abspath("../data"); join=true))
-# datadir = dirs[end-1]
-datadir = "../data/alphamax_sequence_3d/"
-rundirs = sort(filter(dir -> isdir(dir), readdir(abspath(datadir); join=true, sort=false)), lt=natural)
-rundir = rundirs[56]
-rundir2 = rundirs[56]
+# dirs = filter(dir -> isdir(dir) && startswith(basename(dir), "ff3d") , readdir(datadir(); join=true))
+# # datadir = dirs[end-1]
+# datadir = "../data/alphamax_sequence_3d/"
+# rundirs = sort(filter(dir -> isdir(dir), readdir(abspath(datadir); join=true, sort=false)), lt=natural)
+# rundir = rundirs[56]
+# rundir2 = rundirs[56]
 # rundir = dirs[end-3]
 
+dir = datadir("local_2025_07_27_20_05_32")
+# config = load(joinpath(dir, "config.jld2"))
+
+df = collect_results(datadir(dir))
+# select!(df, [:α0, :θ1, :losses])
+# show(df, truncate = 100)
+
+fig = Figure()
+ax = Axis(fig[1, 1], yscale=log10)
+for i in eachindex(df.losses)
+    # println(df.losses[i][1])
+    lines!(ax, df.losses[i][1], label=L"\alpha_0 = %$(df.α0[i]), \ \theta_1 = %$(df.θ1[i])", linewidth=4, linestyle=:solid)
+end
+axislegend(ax, position=:rt)
+display(GLMakie.Screen(), fig)
+
+
+
+# df[!, :path]
 
 NN, Θ_trained, st, losses, q, μ, ϕ, t, θ, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α, Nr, Nθ, Nϕ, Nα, Bmag1, params = load_test(rundir)
 NN_b, Θ_trained_b, st_b, losses_b, q_b, μ_b, ϕ_b, t_b, θ_b, Br1_b, Bθ1_b, Bϕ1_b, α1_b, ∇B_b, B∇α_b, Nr_b, Nθ_b, Nϕ_b, Nα_b, Bmag1_b, params_b = load_test(rundir2)
@@ -42,7 +63,7 @@ for (i,d) in enumerate([39, 45, 49])
 end
 axislegend(ax, position=:rt, labelsize=25)
 display(GLMakie.Screen(), fig)
-save(joinpath("figures", "losses_vs_iterations_M=$(params.model.M).png"), fig, size=(800, 600))
+# save(joinpath("figures", "losses_vs_iterations_M=$(params.model.M).png"), fig, size=(800, 600))
 
 
 # Integrate fieldlines
@@ -64,7 +85,7 @@ sol = integrate_fieldlines!(fieldlines, α_lines, footprints, t1, NN, Θ_trained
 include("Plotting.jl")
 f = plot_magnetosphere_3d(fieldlines, α1[end, :, :], α_lines, params)
 # f = plot_magnetosphere_3d(fieldlines_b, α1_b[end, :, :], α_lines_b, params_b)
-save(joinpath("figures", "twisted_magnetosphere_M=$(params.model.M)_a0=$(params.model.alpha0)_island.png"), f, update=false, size=(750, 600))
+# save(joinpath("figures", "twisted_magnetosphere_M=$(params.model.M)_a0=$(params.model.alpha0)_island.png"), f, update=false, size=(750, 600))
 
 fieldline_length = [line.t[end] for line in fieldlines]
 fieldline_α = abs.(mean.(α_lines))

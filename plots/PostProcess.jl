@@ -456,9 +456,8 @@ end
 function calculate_run_quantities(NNs, Θs, sts, run_params)
     
     Ms = [params.model.M for params in run_params]
-    t1 = 0
     @info "Calculating energies"
-    energies = [calculate_energy(t1, NNs[i], Θs[i], sts[i], run_params[i]) for i in eachindex(run_params)]
+    energies = [calculate_energy(NNs[i], Θs[i], sts[i], run_params[i]) for i in eachindex(run_params)]
     dipole_energies = [calculate_dipole_energy(Ms[i]) for i in eachindex(run_params)]
     # dipole_energies = ifelse.(Ms .== 0.0, 1/3, ifelse.(Ms .== 0.1, 0.4376881279484205, ifelse.(Ms .== 0.25, 0.7438769955308882, NaN)))
     excess_energies = (energies .- dipole_energies)
