@@ -31,10 +31,10 @@ function create_config()
     #              Parameters for the physical properties of the model             #
     # ---------------------------------------------------------------------------- #
     :α_bc_mode => "hotspot",                # "hotspot", "double-hotspot", "axisymmetric"
-    :multipoles_bl => [[1.0, 0.0, 0.0]],    # Coefficients of the magnetic multipoles
+    :multipole_bl => [[1.0, 0.0, 0.0]],    # Coefficients of the magnetic multipoles
     :compactness => 0.17,                   # Stellar compactness M/R. compactness = 0.0 for newtonian limit.
-    :α0 => [1.0, 2.0],
-    :θ1 => [30.0, 45.0],
+    :α0 => 1.0,
+    :θ1 => 30.0,
     :ϕ1 => 180.0,
     :σ => 0.2,
     :α0_b => @onlyif(:α_bc_mode == "double_hotspot", 1.5),
