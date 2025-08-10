@@ -8,8 +8,7 @@ using NaturalSort
 using OrderedCollections
 
 # include("Config.jl")
-const config = create_config()
-@info "Using configuration:"
+config = create_config()
 # pprintln(config)
 
 function main(config)
@@ -32,13 +31,16 @@ end
 configs = dict_list(config)
 expanded_keys = filter(k -> config[k] isa Vector && (length(config[k]) > 1), keys(config))
 jobdir = setup_jobdir()
+
 for c in configs
 
     @info "Running main function with configuration:"
     println([k => c[k] for k in expanded_keys if k in keys(config)])
     simdata = main(c)
-    tagsave(joinpath(jobdir, savename(c, "jld2"; accesses=[k for k in expanded_keys if k in keys(c)])), simdata)
-    
+
+
+    @tagsave(joinpath(jobdir, savename(c, "jld2"; accesses=[k for k in expanded_keys if k in keys(c)])), simdata)
+    # pprintln(simdata)
 end
 
 
