@@ -26,9 +26,12 @@ function create_neural_network(config; test_mode=false)
 	
     # Create neural network. Separate subnetworks for each output
 	subnetworks = [create_subnet(N_input, N_neurons, N_layers, tanh) for _ in 1:N_output]
-    NN = Chain(Parallel(vcat, subnetworks...))
+    # NN = Chain(Parallel(vcat, subnetworks...))
+    NN = Parallel(vcat, subnetworks...)
     Θ, st = Lux.setup(rng, NN)
-    if !test_mode
+    if test_mode
+        Θ = Θ |> ComponentArray .|> Float64
+    else
         Θ = Θ |> ComponentArray |> gpu_device() .|> Float64
     end
     
@@ -137,7 +140,7 @@ end
 function setup_optprob(NN, Θ, st, config)
 
 	input = generate_input(config)
-	optf = Optimization.OptimizationFunction((Θ, input) -> loss_function(input, NN, Θ, st, config), 
+	optf = Optimization.OptimizationFunction((Θ, input) -> loss_function(input, NN, Θ, st, config)[1], 
         Optimization.AutoZygote())
 	optprob = Optimization.OptimizationProblem(optf, Θ, input)
 	optresult = Optimization.solve(optprob, Adam(), maxiters = 1)
@@ -150,7 +153,9 @@ function train_pinn!(optresult, optprob, losses, invH, config)
 
     @unpack N_sets, adam_sets, adam_iters, quasiNewton_method, quasiNewton_iters, linesearch, keep_checkpoints = config
     
-    simdata = copy(config)
+    traindata = OrderedDict()
+    invH = Base.RefValue{AbstractArray{Float64, 2}}()
+    losses = [Float64[] for _ in 1:6]
 
 	# Initialise the inverse Hessian
 	initial_invH = nothing   
@@ -201,7 +206,6 @@ function train_pinn!(optresult, optprob, losses, invH, config)
         # Store the results
         simdata[:Θ] = optresult.u |> Lux.cpu_device()
         simdata[:losses] = losses
-        simdata[:optresult] = optresult
 
         # @save joinpath(job_dir, "trained_model.jld2") Θ_trained
         # @save joinpath(job_dir, "losses_vs_iterations.jld2") losses
