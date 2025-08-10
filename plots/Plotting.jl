@@ -15,56 +15,58 @@ function plot_losses(losses)
     # save(joinpath("figures", "losses.png"), f1)
 end
 
-function plot_line(lscene, sol, α_line, α_max, cmap, params)
+function plot_line(ax, line, α_max, cmap)
     
-    q, μ, ϕ = sol[1,:], sol[2,:], sol[3,:]
+    # q, μ, ϕ = sol[1,:], sol[2,:], sol[3,:]
+    @unpack q, μ, ϕ, α = line
     
     x = @. √(abs(1 - μ^2)) / q * cos(ϕ)
     y = @. √(abs(1 - μ^2)) / q * sin(ϕ)
     z = @. μ / q
 
-    lines!(lscene, x, y, z
-        , color=α_line, colormap=cmap
+    lines!(ax, x, y, z
+        , color=α, colormap=cmap
         , colorrange=(0.05, α_max)
         , lowclip=:silver
         , linewidth = 5)
    
 end
 
-function plot_fieldlines(lscene, fieldlines, α_lines, α_max, cmap, params)
-   for l in eachindex(fieldlines)
-      sol = fieldlines[l]
-      α_line = α_lines[l]
-      plot_line(lscene, sol, α_line, α_max, cmap, params)
+function plot_fieldlines(ax, fieldlines, α_max, cmap)
+    for line in fieldlines
+        plot_line(ax, line, α_max, cmap)
    end
 end
 
-function plot_magnetosphere_3d(fieldlines, α1, α_lines, params; plot_lines = true)
-    # α_max = maximum(α1)
-    α_max = 3.5
+function plot_magnetosphere_3d(fieldlines, α1; plot_lines = true, use_lscene=false)
+    α_max = maximum(α1)
+    # α_max = 3.5
 
     f = Figure()
 	
-    # lscene = LScene(f[1,1], show_axis=true,)
-    # zoom!(lscene.scene, cameracontrols(lscene.scene), 1.4)
-    # rotate_cam!(lscene.scene, Vec3f(0.5, 2.2, 0.0))
+    if use_lscene
+        ax = LScene(f[1,1], show_axis=true,)
+        zoom!(ax.scene, cameracontrols(ax.scene), 1.4)
+        rotate_cam!(ax.scene, Vec3f(0.5, 2.2, 0.0))
+    else
 
-    lscene = Axis3(f[1, 1], aspect = :data, 
-        limits=((-2,2), (-2, 2), (-2,2)),
-        # limits=((-20, 15), (-20, 10), (-9, 7)),
-        ytickformat = values -> ["$(Int(-value))" for value in values],
-        # azimuth = 3.2, elevation = 1.1e-01,
-        azimuth = 2.24, elevation = 5.9e-01,
-        xlabelsize = 25, ylabelsize = 25, zlabelsize = 25,
-        xticklabelsize = 20, yticklabelsize = 20, zticklabelsize = 20,
-        xlabel = L"x \ [R]", ylabel = L"y \ [R]", zlabel = L"z \ [R]",
-        # xlabelrotation = π/2
-        )
+        ax = Axis3(f[1, 1], aspect = :data, 
+            limits=((-2,2), (-2, 2), (-2,2)),
+            # limits=((-20, 15), (-20, 10), (-9, 7)),
+            ytickformat = values -> ["$(Int(-value))" for value in values],
+            # azimuth = 3.2, elevation = 1.1e-01,
+            azimuth = 2.24, elevation = 5.9e-01,
+            xlabelsize = 25, ylabelsize = 25, zlabelsize = 25,
+            xticklabelsize = 20, yticklabelsize = 20, zticklabelsize = 20,
+            xlabel = L"x \ [R]", ylabel = L"y \ [R]", zlabel = L"z \ [R]",
+            # xlabelrotation = π/2
+            )
+    end
 
     cmap = cgrad(:gist_heat, 100, rev=true)
     # cmap = cgrad(:bone_1, 100, rev=true)
     # cmap = cgrad(:plasma, rev=false)
-	star = mesh!(lscene, Sphere(Point3(0, 0, 0), 1.0)
+	star = mesh!(ax, Sphere(Point3(0, 0, 0), 1.0)
 				 , color=α1, colormap=cmap, interpolate=true
 				 , colorrange=(0.0, α_max)
                 # , lowclip=:silver
@@ -76,7 +78,7 @@ function plot_magnetosphere_3d(fieldlines, α1, α_lines, params; plot_lines = t
         )
     # rowsize!(f.layout, 1, lscene.scene.px_area[].widths[2])
 	if plot_lines
-		plot_fieldlines(lscene, fieldlines, α_lines, α_max, cmap, params)  
+		plot_fieldlines(ax, fieldlines, α_max, cmap)  
     end
     # Adjust viewing angle
     

@@ -1,187 +1,84 @@
-function create_test_input(n_q, n_μ, n_ϕ, params; use_θ = false)
+function create_test_input(n_q, n_μ, n_ϕ; use_θ = false)
 
     q = reshape([q for ϕ in range(0, 2π, n_ϕ) for μ in range(-1+1e-2, 1-1e-2, n_μ) for q in range(1e-2, 1, n_q)], 1, :)
-	μ = reshape([μ for ϕ in range(0, 2π, n_ϕ) for μ in range(-1+1e-2, 1-1e-2, n_μ) for q in range(1e-2, 1, n_q)], 1, :)
-	ϕ = reshape([ϕ for ϕ in range(0, 2π, n_ϕ) for μ in range(-1+1e-2, 1-1e-2, n_μ) for q in range(1e-2, 1, n_q)], 1, :)
-    
-    if use_θ
+	if use_θ
 		θ = reshape([θ for ϕ in range(0, 2π, n_ϕ) for θ in range(1e-1, π - 1e-1, n_μ) for q in range(1e-2, 1, n_q)], 1, :)
 		μ = cos.(θ)
+    else
+        μ = reshape([μ for ϕ in range(0, 2π, n_ϕ) for μ in range(-1+1e-2, 1-1e-2, n_μ) for q in range(1e-2, 1, n_q)], 1, :)
 	end
-
+	ϕ = reshape([ϕ for ϕ in range(0, 2π, n_ϕ) for μ in range(-1+1e-2, 1-1e-2, n_μ) for q in range(1e-2, 1, n_q)], 1, :)
+    
     return q, μ, ϕ
 end
 
-function create_test(n_q, n_μ, n_ϕ, NN, Θ, st, params)
+function evaluate_on_grid(n_q, n_μ, n_ϕ, NN, Θ, st, config; use_θ = false, extended = false)
 	
-    q, μ, ϕ = create_test_input(n_q, n_μ, n_ϕ, params, use_θ = true)
-    t = zeros(size(q))
+    griddata = OrderedDict{Symbol, Any}()
 
-	Nr, Nθ, Nϕ, Nα = evaluate_subnetworks(q, μ, ϕ, t, Θ, st, NN)
+    q, μ, ϕ = create_test_input(n_q, n_μ, n_ϕ; use_θ = use_θ)
 
-	Br1 = Br(q, μ, ϕ, Nr, params)
+	Nr, Nθ, Nϕ, Nα = evaluate_subnetworks(q, μ, ϕ, NN, Θ, st)
+
+	Br1 = Br(q, μ, ϕ, Nr, config)
 	Bθ1 = Bθ(q, μ, ϕ, Nθ)
 	Bϕ1 = Bϕ(q, μ, ϕ, Nϕ)
-	α1 = α(q, μ, ϕ, t, Nα, params)
+	α1 = α(q, μ, ϕ, Nα, config)
 
-	dBr_dq, dBθ_dq, dBϕ_dq, dα_dq, 
-    dBr_dμ, dBθ_dμ, dBϕ_dμ, dα_dμ, 
-    dBr_dϕ, dBθ_dϕ, dBϕ_dϕ, dα_dϕ  = calculate_derivatives(q, μ, ϕ, t, Θ, st, NN, params)
-
-    ∇B = calculate_divergence(q, μ, Br1, Bθ1, dBr_dq, dBθ_dμ, dBϕ_dϕ, params)
-	B∇α = calculate_Bdotgradα(q, μ, Br1, Bθ1, Bϕ1, dα_dq, dα_dμ, dα_dϕ, params)
-    # αS = α(q1, μ, ϕ, t, Nα, params)
-
-	q = reshape(q, n_q, n_μ, n_ϕ)
+    q = reshape(q, n_q, n_μ, n_ϕ)
 	μ = reshape(μ, n_q, n_μ, n_ϕ)
 	ϕ = reshape(ϕ, n_q, n_μ, n_ϕ)
-    t = reshape(t, n_q, n_μ, n_ϕ)
-	α1 = reshape(α1, n_q, n_μ, n_ϕ)
 	Br1 = reshape(Br1, n_q, n_μ, n_ϕ)
 	Bθ1 = reshape(Bθ1, n_q, n_μ, n_ϕ)
 	Bϕ1 = reshape(Bϕ1, n_q, n_μ, n_ϕ)
-	∇B = reshape(∇B, n_q, n_μ, n_ϕ)
-	B∇α = reshape(B∇α, n_q, n_μ, n_ϕ)
-	Nr = reshape(Nr, n_q, n_μ, n_ϕ)
-	Nθ = reshape(Nθ, n_q, n_μ, n_ϕ)
-	Nϕ = reshape(Nϕ, n_q, n_μ, n_ϕ)
-	Nα = reshape(Nα, n_q, n_μ, n_ϕ)
+    α1 = reshape(α1, n_q, n_μ, n_ϕ)
 
-	return q, μ, ϕ, t, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α, Nr, Nθ, Nϕ, Nα
+    @pack! griddata = q, μ, ϕ, Br1, Bθ1, Bϕ1, α1
+
+    if extended
+
+        dBr_dq, dBθ_dq, dBϕ_dq, dα_dq, 
+        dBr_dμ, dBθ_dμ, dBϕ_dμ, dα_dμ, 
+        dBr_dϕ, dBθ_dϕ, dBϕ_dϕ, dα_dϕ  = calculate_derivatives(q, μ, ϕ, NN, Θ, st, config)
+
+        ∇B = calculate_divergence(q, μ, Br1, Bθ1, dBr_dq, dBθ_dμ, dBϕ_dϕ, config)
+        B∇α = calculate_Bdotgradα(q, μ, Br1, Bθ1, Bϕ1, dα_dq, dα_dμ, dα_dϕ, config)
+
+        ∇B = reshape(∇B, n_q, n_μ, n_ϕ)
+        B∇α = reshape(B∇α, n_q, n_μ, n_ϕ)
+        Nr = reshape(Nr, n_q, n_μ, n_ϕ)
+        Nθ = reshape(Nθ, n_q, n_μ, n_ϕ)
+        Nϕ = reshape(Nϕ, n_q, n_μ, n_ϕ)
+        Nα = reshape(Nα, n_q, n_μ, n_ϕ)
+
+        @pack! griddata = q, μ, ϕ, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α, Nr, Nθ, Nϕ, Nα
+	end
+
+	return griddata
 end
 
-function run_test(datadir)
-
-    params = import_params(joinpath(datadir, "config.toml"))
-
-    # Create neural network
-    NN, _, st = create_neural_network(params, test_mode=true)
-
-    Θ_trained = load(joinpath(datadir, "trained_model.jld2"), "Θ_trained")
-    losses = load(joinpath(datadir, "losses_vs_iterations.jld2"), "losses")
-
-    # Create test grid
-    n_q = 160
-    n_μ = 80
-    n_ϕ = 160
-
-    # test_input = create_test_input(n_q, n_μ, n_ϕ, params; use_θ = true)
-
-    q, μ, ϕ, t, 
-    Br1, Bθ1, Bϕ1, α1, 
-    ∇B, B∇α,
-    Nr, Nθ, Nϕ, Nα = create_test(n_q, n_μ, n_ϕ, NN, Θ_trained, st, params)
-    
-    Bmag1 = .√(Br1.^2 .+ Bθ1.^2 .+ Bϕ1.^2)
-    θ = acos.(μ)
-
-    @info "Test created"
-
-    return NN, Θ_trained, st, losses, q, μ, ϕ, t, θ, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α, Nr, Nθ, Nϕ, Nα, Bmag1, params
-end
-
-function save_test(rundir, NN, Θ_trained, st, losses, q, μ, ϕ, t, θ, Br1, Bθ1, Bϕ1, α1, ∇B, B∇α, Nr, Nθ, Nϕ, Nα, Bmag1, params)
-    save_dict = Dict(
-        "NN" => NN,
-        "Theta" => Θ_trained,
-        "st" => st,
-        "losses" => losses,
-        "q" => q,
-        "mu" => μ,
-        "phi" => ϕ,
-        "t" => t,
-        "theta" => θ,
-        "Br" => Br1,
-        "Btheta" => Bθ1,
-        "Bphi" => Bϕ1,
-        "alpha" => α1,
-        "divB" => ∇B,
-        "BdotGradAlpha" => B∇α,
-        "Nr" => Nr,
-        "Ntheta" => Nθ,
-        "Nphi" => Nϕ,
-        "Nalpha" => Nα,
-        "Bmag" => Bmag1,
-        "params" => params
-    )
-
-    jldsave(joinpath(rundir, "run_data.jld2"); save_dict)
-end
-
-function load_test(rundir::String)
-    dict = load(joinpath(rundir, "run_data.jld2"))["save_dict"]
-    return (
-        NN = dict["NN"],
-        Θ_trained = dict["Theta"],
-        st = dict["st"],
-        losses = dict["losses"],
-        q = dict["q"],
-        μ = dict["mu"],
-        ϕ = dict["phi"],
-        t = dict["t"],
-        θ = dict["theta"],
-        Br1 = dict["Br"],
-        Bθ1 = dict["Btheta"],
-        Bϕ1 = dict["Bphi"],
-        α1 = dict["alpha"],
-        ∇B = dict["divB"],
-        B∇α = dict["BdotGradAlpha"],
-        Nr = dict["Nr"],
-        Nθ = dict["Ntheta"],
-        Nϕ = dict["Nphi"],
-        Nα = dict["Nalpha"],
-        Bmag1 = dict["Bmag"],
-        params = dict["params"]
-    )
-end
-
-function load_gradrubin_data(output_path::String)
-
-    file = readdir(joinpath(output_path, "silo_output"), join=true)[end]
-    @info "Using $file"
-    
-    f = HDF5.h5open(file, "r")
-    r = f[read_attribute(f["r"], "silo").value0][]
-    θ = f[read_attribute(f["theta"], "silo").value0][]
-    φ = f[read_attribute(f["varphi"], "silo").value0][]
-    alpha = f[read_attribute(f["alpha"], "silo").value0][]
-    u_q = f[read_attribute(f["u_1"], "silo").value0][]
-    u_theta = f[read_attribute(f["u_2"], "silo").value0][]
-    u_phi = f[read_attribute(f["u_3"], "silo").value0][]
-    B_q = f[read_attribute(f["B_1"], "silo").value0][]
-    B_theta = f[read_attribute(f["B_2"], "silo").value0][]
-    B_phi = f[read_attribute(f["B_3"], "silo").value0][]
-
-    q = 1 ./ r
-    μ = cos.(θ)
-
-    return r, q, θ, μ, φ, alpha, u_q, u_theta, u_phi, B_q, B_theta, B_phi
-end
-
-function Bmag(q, μ, ϕ, Nr, Nθ, Nϕ, params)
+function Bmag(q, μ, ϕ, Nr, Nθ, Nϕ, config)
 	
-	return √(Br(q, μ, ϕ, Nr, params)[1]^2 + Bθ(q, μ, ϕ, Nθ)[1]^2 + Bϕ(q, μ, ϕ, Nϕ)[1]^2)
+	return √(Br(q, μ, ϕ, Nr, config)[1]^2 + Bθ(q, μ, ϕ, Nθ)[1]^2 + Bϕ(q, μ, ϕ, Nϕ)[1]^2)
 end
 
 function energy_integrand(x, p)
 	q, μ, ϕ = x
-	t1, NN, Θ, st, params = p
+	NN, Θ, st, config = p
 
-    Nr, Nθ, Nϕ, Nα = evaluate_subnetworks(q, μ, ϕ, t1, Θ, st, NN)
+    Nr, Nθ, Nϕ, Nα = evaluate_subnetworks(q, μ, ϕ, NN, Θ, st)
 
-	return Bmag(q, μ, ϕ, Nr, Nθ, Nϕ, params)^2 / q^4 / (8π)
+	return (Br(q, μ, ϕ, Nr, config)[1]^2 + Bθ(q, μ, ϕ, Nθ)[1]^2 + Bϕ(q, μ, ϕ, Nϕ)[1]^2) / q^4 / (8π)
 end
 
-function calculate_energy(t1, NN, Θ, st, params)
-	# tt = t1 * ones(size(q))
+function calculate_energy(NN, Θ, st, config)
 
     domain = ([0, -1, 0], [1, 1, 2π])
-	p = (t1, NN, Θ, st, params)
+	p = (NN, Θ, st, config)
 	prob = IntegralProblem(energy_integrand, domain, p)
 
-	# sol = solve(prob, HCubatureJL(), reltol = 1e-5, abstol = 1e-5, maxiters = 10000)
 	sol = solve(prob, HCubatureJL(), reltol = 1e-5, abstol = 1e-5, maxiters = 10000)
-	return sol.u
+	return sol.u  
 end
 
 function toroidal_energy_integrand(x, p)
@@ -216,7 +113,6 @@ function magnetic_virial_surface_integrand(x, p)
 
 	return gr_factor^2 * (Br(q, μ, ϕ, Nr, params)[1]^2 - Bθ(q, μ, ϕ, Nθ)[1]^2 - Bϕ(q, μ, ϕ, Nϕ)[1]^2) / (8π)
 end
-
 
 function calculate_magnetic_virial_surface(t1, NN, Θ, st, params)
     
@@ -273,32 +169,19 @@ function calculate_quadrupole_moment(t1, NN, Θ, st, params)
 	return sol.u
 end
 
-function find_footprints(α1, Br1, μ, ϕ; α_range = 0.0, Br1_range = 0.0, μ_range = 0.7, ϕ_range = [π], r_idx  = 160)
-	ϕs = Float64[]
-	μs = Float64[]
+function find_footprints(μ, ϕ, α1; μ_interval = 0..1, ϕ_interval = 0..2π, α_interval = 0.0..maximum(α1))
+	
+    μs = Float64[]
+    ϕs = Float64[]
 
-    if length(μ_range) == 1
-	    μ_range = [findnearest(μ, μ_range), findnearest(μ, μ_range)]
-    end
-    if length(α_range) == 1
-        α_range = [findnearest(α1, α_range), findnearest(α1, α_range)]
-    end
-
-    ϕ_range = [findnearest(ϕ, _ϕ) for _ϕ in ϕ_range]
-
-    # r_idx = argmin(abs.(r .- 1.5))
-    r_idx = 160
-	for k in range(1, size(μ, 3))
+	for k in range(1, size(ϕ, 3))
 		for j in range(1, size(μ, 2))
-			if (
-                α_range[1] ≤ α1[r_idx, j, k] ≤ α_range[2] &&
-                Br1[r_idx, j, k] > Br1_range &&
-                μ_range[1] ≤ μ[r_idx, j, k] ≤ μ_range[2] &&
-                ϕ[r_idx, j, k] in ϕ_range
+			if (μ[end, j, k] ∈ μ_interval &&
+                ϕ[end, j, k] ∈ ϕ_interval &&
+                α1[end, j, k] ∈ α_interval
             )
-
-				push!(μs, μ[r_idx, j, k])
-				push!(ϕs, ϕ[r_idx, j, k])
+				push!(μs, μ[end, j, k])
+				push!(ϕs, ϕ[end, j, k])
 			end
 		end
 	end
@@ -308,16 +191,20 @@ end
 
 function field_line_equations!(du, u, p, t)
     q, μ, ϕ = u
-    t1, NN, Θ, st, params = p
+    NN, Θ, st, config = p
     
-    Nr, Nθ, Nϕ, Nα = evaluate_subnetworks(q, μ, ϕ, t1, Θ, st, NN)
+    if isinf(ϕ)
+        ϕ = NaN
+    end
 
-	Br1 = Br(q, μ, ϕ, Nr[1], params)
+    Nr, Nθ, Nϕ = evaluate_subnetworks(q, μ, ϕ, NN, Θ, st)[1:3]
+
+	Br1 = Br(q, μ, ϕ, Nr[1], config)
 	Bθ1 = Bθ(q, μ, ϕ, Nθ[1])
 	Bϕ1 = Bϕ(q, μ, ϕ, Nϕ[1])
 	B = @. √(Br1^2 + Bθ1^2 + Bϕ1^2)
 
-    # println("t = $t, q = $q, μ = $μ, ϕ = $ϕ, α1 = $α1")
+    # println("t = $t, q = $q, μ = $μ, ϕ = $ϕ")
 
     du[1] = @. -q^2 * Br1 / B
     du[2] = @. -q * √abs(1 - μ^2) * Bθ1 / B
@@ -338,8 +225,10 @@ function stop_at_negative_ϕ(u, t, integrator)
 	return u[3] - 0.0
 end
 
-function integrate_fieldlines!(fieldlines, α_lines, footprints, t1, NN, Θ, st, params; q_start = 1.0)
-   
+function integrate_fieldlines(footprints, NN, Θ, st, config; q_start = 1.0)
+
+    fieldlines = Array{NamedTuple}(undef, length(footprints))
+
     affect!(integrator) = terminate!(integrator)
     cb1 = ContinuousCallback(stop_at_surface, affect!)
     cb2 = ContinuousCallback(stop_at_large_ϕ, affect!)
@@ -347,46 +236,40 @@ function integrate_fieldlines!(fieldlines, α_lines, footprints, t1, NN, Θ, st,
     cb = CallbackSet(cb1, cb2, cb3)
 
     u0 = [q_start; 0.0; 0.0]
-    
-    # q1 = ones(size(q))
-    # tt = t1 * ones(size(q))
-    p = (t1, NN, Θ, st, params)
+    p = (NN, Θ, st, config)
     tspan = (0.0, 150.0)
     prob = ODEProblem(field_line_equations!, u0, tspan, p)
 
-    for (μ, ϕ) in footprints
+    for (i, (μ, ϕ)) in enumerate(footprints)
         # println("Integrating for μ = $μ, ϕ = $ϕ")
         u0 = [q_start; μ; ϕ]
         prob = remake(prob, u0 = u0)
-        sol = solve(prob, alg = Tsit5(), callback=cb, abstol=1e-12, reltol=1e-12)
-        α_line = caluclate_α_along_line(sol, t1, Θ, st, NN, params)
+        sol = solve(prob, alg=Tsit5(), callback=cb, abstol=1e-9, reltol=1e-9, dense=false, maxiters = 10000)
+        t = sol.t
+        q = sol[1, :]
+        μ = sol[2, :]
+        ϕ = sol[3, :]
         
-        push!(α_lines, α_line)
-        push!(fieldlines, sol)
+        α_line = caluclate_α_along_line(q, μ, ϕ, NN, Θ, st, config)
+        fieldlines[i] = (;t = t, q = q, μ = μ, ϕ = ϕ, α = α_line)
     end
 
-	sol = solve(prob, alg = Tsit5(), callback=cb, abstol=1e-12, reltol=1e-12)
-
-	return sol
+	return fieldlines
 end
 
-function caluclate_α_along_line(sol, t1, Θ, st, NN, params)
+function caluclate_α_along_line(q, μ, ϕ, NN, Θ, st, config)
     
-    q, μ, ϕ = sol[1,:], sol[2,:], sol[3,:]
-
-    n = length(q)
-
-    q = reshape(q, 1, n)
-    μ = reshape(μ, 1, n)
-    ϕ = reshape(ϕ, 1, n)
-    t = t1 * ones(1, n)
+    q, μ, ϕ = reshape(q, 1, :), reshape(μ, 1, :), reshape(ϕ, 1, :)
 
     subnet_α = NN.layers[4]
-    Nα = subnet_α(vcat(q, μ, cos.(ϕ), sin.(ϕ), t), Θ.layer_4, st.layer_4)[1]
-    α1 = α(q, μ, ϕ, t, Nα, params)
-    α1 = reshape(α1, n)
+    # Temporary fix for the case that the saved output was using 5 inputs (mainly old models that had the unused t variable)
+    if size(Θ[:layer_1][:layer_1][:weight])[2] == 5
+        Nα = subnet_α(vcat(q, μ, cos.(ϕ), sin.(ϕ), zero(q)), Θ.layer_4, st.layer_4)[1]
+    else
+        Nα = subnet_α(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.layer_4, st.layer_4)[1]
+    end
 
-    return α1
+    return reshape(α(q, μ, ϕ, Nα, config), :)
 end
 
 function findnearest(A::AbstractArray, t) 
@@ -451,7 +334,6 @@ function calculate_dipole_energy(M)
         return (3 / (32 * M^6)) * (2M * (M + 1) + log(1 - 2M)) * (2M * (M - 1) + (2M - 1) * log(1 - 2M))
     end
 end
-
 
 function calculate_run_quantities(NNs, Θs, sts, run_params)
     
