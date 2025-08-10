@@ -1,7 +1,7 @@
 function Br_surface(μ, ϕ, config)
 	
-	@unpack multipoles_bl, compactness = config
-    b1, b2, b3 = multipoles_bl
+	@unpack multipole_bl, compactness = config
+    b1, b2, b3 = multipole_bl
 
     if compactness == 0
 
@@ -10,10 +10,8 @@ function Br_surface(μ, ϕ, config)
     else
         M = compactness
 
-        return @. b1 * (-3 / (8 * M^3)) * 2 * μ * (log(1 - 2 * M) + 2 * M + (2 * M)^2 / 2) \
-            + b2 * 5 / (8 * M^5) * (3 * μ^2 - 1) * ((6 * M - 4) * log(1 - 2 * M) - 8 * M + 4 * M^2 + 4 * M^3 / 3)
+        return @. b1 * (-3 / (8 * M^3)) * 2 * μ * (log(1 - 2 * M) + 2 * M + (2 * M)^2 / 2) + b2 * 5 / (8 * M^5) * (3 * μ^2 - 1) * ((6 * M - 4) * log(1 - 2 * M) - 8 * M + 4 * M^2 + 4 * M^3 / 3)
     end
-        # end
 end
 
 function gaussian_hotspot(μ, ϕ, α0, θ1, ϕ1, σ)
@@ -100,10 +98,21 @@ function evaluate_subnetworks(q, μ, ϕ, NN, Θ, st)
 
     subnet_r, subnet_θ, subnet_ϕ, subnet_α = NN.layers
 
-    Nr = subnet_r(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.layer_1, st.layer_1)[1]
-    Nθ = subnet_θ(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.layer_2, st.layer_2)[1]
-    Nϕ = subnet_ϕ(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.layer_3, st.layer_3)[1]
-    Nα = subnet_α(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.layer_4, st.layer_4)[1]
+    # Temporary fix for the case that the saved output was using 5 inputs (mainly old models that had the unused t variable)
+    if size(Θ[:layer_1][:layer_1][:weight])[2] == 5
+
+        # @warn "Using temporary fix for 5-input model"
+
+        Nr = subnet_r(vcat(q, μ, cos.(ϕ), sin.(ϕ), zero(q)), Θ.layer_1, st.layer_1)[1]
+        Nθ = subnet_θ(vcat(q, μ, cos.(ϕ), sin.(ϕ), zero(q)), Θ.layer_2, st.layer_2)[1]
+        Nϕ = subnet_ϕ(vcat(q, μ, cos.(ϕ), sin.(ϕ), zero(q)), Θ.layer_3, st.layer_3)[1]
+        Nα = subnet_α(vcat(q, μ, cos.(ϕ), sin.(ϕ), zero(q)), Θ.layer_4, st.layer_4)[1]
+    else
+        Nr = subnet_r(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.layer_1, st.layer_1)[1]
+        Nθ = subnet_θ(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.layer_2, st.layer_2)[1]
+        Nϕ = subnet_ϕ(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.layer_3, st.layer_3)[1]
+        Nα = subnet_α(vcat(q, μ, cos.(ϕ), sin.(ϕ)), Θ.layer_4, st.layer_4)[1]
+    end
 
     return Nr, Nθ, Nϕ, Nα
     
