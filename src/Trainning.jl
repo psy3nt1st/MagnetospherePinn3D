@@ -106,11 +106,12 @@ function loss_function(input, NN, Θ, st, config)
     ls = [l1, l2, l3, l4, l5] ./ N_points 
 
     # loss_g((l1 + l2 + l3 + l4 + l5) / params.architecture.N_points)
-    return loss_g(sum(ls)), ls
+    # return loss_g(sum(ls)), ls
+    return loss_g(sum(ls))
 
 end
 
-function callback(p, l, ls, losses, prog, invH, config)
+function callback(p, l, losses, prog, invH, config)
 
     @unpack loss_g = config
 
@@ -121,9 +122,9 @@ function callback(p, l, ls, losses, prog, invH, config)
 
 	# Store loss history
 	push!(losses[1], l)
-	for i in eachindex(ls)
-		push!(losses[i+1], ls[i])
-	end
+	# for i in eachindex(ls)
+	# 	push!(losses[i+1], ls[i])
+	# end
 
 	# Store the last inverse Hessian (only in the quasi-Newton stage)
 	if "~inv(H)" ∈ keys(p.original.metadata)
@@ -140,7 +141,7 @@ end
 function setup_optprob(NN, Θ, st, config)
 
 	input = generate_input(config)
-	optf = Optimization.OptimizationFunction((Θ, input) -> loss_function(input, NN, Θ, st, config)[1], 
+	optf = Optimization.OptimizationFunction((Θ, input) -> loss_function(input, NN, Θ, st, config), 
         Optimization.AutoZygote())
 	optprob = Optimization.OptimizationProblem(optf, Θ, input)
 	optresult = Optimization.solve(optprob, Adam(), maxiters = 1)
@@ -149,11 +150,13 @@ function setup_optprob(NN, Θ, st, config)
 end
  
 
-function train_pinn!(optresult, optprob, losses, invH, config)
+function train_pinn!(optresult, optprob, config)
 
-    @unpack N_sets, adam_sets, adam_iters, quasiNewton_method, quasiNewton_iters, linesearch, keep_checkpoints = config
+    start_time = now()
+
+    @unpack N_sets, adam_sets, adam_iters, quasiNewton_method, quasiNewton_iters, linesearch, keep_checkpoints, subjobdir = config
     
-    traindata = OrderedDict()
+    traindata = OrderedDict{Symbol, Any}()
     invH = Base.RefValue{AbstractArray{Float64, 2}}()
     losses = [Float64[] for _ in 1:6]
 
@@ -191,7 +194,7 @@ function train_pinn!(optresult, optprob, losses, invH, config)
 		optresult = Optimization.solve(
             optprob,
             optimizer,
-            callback = (p, l, ls) -> callback(p, l, ls, losses, prog, invH, config),
+            callback = (p, l) -> callback(p, l, losses, prog, invH, config),
             maxiters = maxiters,
             extended_trace = true
         )
@@ -203,12 +206,16 @@ function train_pinn!(optresult, optprob, losses, invH, config)
 			initial_invH = begin x -> invH[] end
 		end
 
-        # Store the results
-        simdata[:Θ] = optresult.u |> Lux.cpu_device()
-        simdata[:losses] = losses
+        duration = now()-start_time
 
-        # @save joinpath(job_dir, "trained_model.jld2") Θ_trained
-        # @save joinpath(job_dir, "losses_vs_iterations.jld2") losses
+        # Store the results
+        traindata[:Θ] = optresult.u |> Lux.cpu_device()
+        traindata[:losses] = losses
+        traindata[:start_time] = start_time
+        traindata[:duration] = duration / Millisecond(1000)
+        traindata[:duration_readable] = Dates.format(convert(DateTime, duration), "HH:MM:SS")
+
+        @tagsave(joinpath(subjobdir, "traindata.jld2"), "data", traindata)
 
         # if keep_checkpoints
         #     checkpoints_dir = mkpath(joinpath(job_dir, "checkpoints"))
@@ -218,5 +225,5 @@ function train_pinn!(optresult, optprob, losses, invH, config)
         # end
 	end
    
-	return simdata
+	return traindata
 end

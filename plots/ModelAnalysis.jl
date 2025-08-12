@@ -28,6 +28,15 @@ datadir = "../data/alphamax_sequence_axisymmetric"
 
 @info "Using data in $datadir"
 
+# results1 = collect_results(jobdir; subfolders=true, 
+#     rinclude = [r"config"],
+#     load_function = filename -> load(filename, "data"))
+# results2 = collect_results(jobdir; subfolders=true, 
+#     rinclude = [r"traindata"],
+#     load_function = filename -> load(filename, "data"))
+
+# results = hcat(results1, results2, makeunique=true)
+
 # datadir = "../data/ff3d_3155186/"
 run_dirs = sort(filter(dir -> isdir(dir) , readdir(abspath(datadir); join=true, sort=false)), lt=natural)
 
