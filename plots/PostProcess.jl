@@ -244,14 +244,19 @@ function integrate_fieldlines(footprints, NN, Θ, st, config; q_start = 1.0)
         # println("Integrating for μ = $μ, ϕ = $ϕ")
         u0 = [q_start; μ; ϕ]
         prob = remake(prob, u0 = u0)
-        sol = solve(prob, alg=Tsit5(), callback=cb, abstol=1e-9, reltol=1e-9, dense=false, maxiters = 10000)
-        t = sol.t
-        q = sol[1, :]
-        μ = sol[2, :]
-        ϕ = sol[3, :]
-        
-        α_line = caluclate_α_along_line(q, μ, ϕ, NN, Θ, st, config)
-        fieldlines[i] = (;t = t, q = q, μ = μ, ϕ = ϕ, α = α_line)
+        try
+            sol = solve(prob, alg=Tsit5(), callback=cb, abstol=1e-9, reltol=1e-9, dense=false, maxiters = 10000)
+            t = sol.t
+            q = sol[1, :]
+            μ = sol[2, :]
+            ϕ = sol[3, :]
+            
+            α_line = caluclate_α_along_line(q, μ, ϕ, NN, Θ, st, config)
+            fieldlines[i] = (;t = t, q = q, μ = μ, ϕ = ϕ, α = α_line)
+        catch e
+            @warn "Failed to integrate field line for footprint ($μ, $ϕ): $e"
+            continue
+        end
     end
 
 	return fieldlines

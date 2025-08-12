@@ -101,7 +101,54 @@ function convert_bias_to_1d(θ)
     return θ
 end
 
-dirs = (filter(dir -> isdir(dir), readdir(abspath("data/sigma_sequence"); join=true, sort=false)))
+function read_traindata_from_dir(dir)
+    traindata = OrderedDict{Symbol, Any}()
+
+    # Read losses
+    losses_file = joinpath(dir, "losses_vs_iterations.jld2")
+    if isfile(losses_file)
+        traindata[:losses] = load(losses_file, "losses")
+    else
+        traindata[:losses] = missing
+    end
+
+    # Read trained model
+    model_file = joinpath(dir, "trained_model.jld2")
+    if isfile(model_file)
+        traindata[:Θ] = load(model_file, "Θ_trained")
+    else
+        traindata[:Θ] = missing
+    end
+
+    # Read execution time
+    exec_file = joinpath(dir, "execution_time.txt")
+    if isfile(exec_file)
+        # Try to parse the seconds from the first line of the file
+        duration = missing
+        duration_readable = missing
+        open(exec_file, "r") do io
+            for line in eachline(io)
+                if occursin("Execution time (seconds)", line)
+                    continue  # skip header
+                end
+                # Try to parse the first value (seconds)
+                vals = split(strip(line))
+                if !isempty(vals)
+                    duration = tryparse(Float64, vals[1])
+                    duration_readable = vals[2]
+                end
+                break
+            end
+        end
+        traindata[:duration] = duration
+        traindata[:duration_readable] = duration_readable
+    else
+        traindata[:duration] = missing
+    end
+
+    return traindata
+end
+
 function convert_old_data(dirs)
     for dir in dirs
 
@@ -134,7 +181,15 @@ function convert_old_data(dirs)
             fieldlines = integrate_fieldlines(footprints, NN, Θ, st, config; q_start = 1);
             wsave(joinpath(dir, "fieldlines.jld2"), "data", fieldlines)
         end
+
+        if !isfile(joinpath(dir, "traindata.jld2"))
+            @info "Reading training data"
+            traindata = read_traindata_from_dir(dir)
+            wsave(joinpath(dir, "traindata.jld2"), "data", traindata)
+        end
+
     end
 end
 
-convert_old_data(dirs[54:end])
+dirs = (filter(dir -> isdir(dir), readdir(abspath("data/theta1_sequence/"); join=true, sort=false)))
+convert_old_data(dirs)
