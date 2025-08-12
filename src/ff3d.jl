@@ -7,7 +7,6 @@ using ComponentArrays
 using NaturalSort
 using OrderedCollections
 
-# include("Config.jl")
 config = create_config()
 # pprintln(config)
 
@@ -20,31 +19,35 @@ function main(config)
     optresult, optprob = setup_optprob(NN, Θ, st, config)
 
     @info "Training neural network"
-    invH = Base.RefValue{AbstractArray{Float64, 2}}()
-    losses = [Float64[] for _ in 1:6]
-    simdata = train_pinn!(optresult, optprob, losses, invH, config)
+    # invH = Base.RefValue{AbstractArray{Float64, 2}}()
+    # losses = [Float64[] for _ in 1:6]
+    traindata = train_pinn!(optresult, optprob, config)
 
-    return simdata
+    return traindata
 end
 
 # config1 = create_config()
+jobdir = setup_jobdir()
+config[:jobdir] = jobdir
+open(joinpath(jobdir, "config.txt"), "w") do io
+    pprintln(io, config)
+end
 configs = dict_list(config)
 expanded_keys = filter(k -> config[k] isa Vector && (length(config[k]) > 1), keys(config))
-jobdir = setup_jobdir()
 
 for c in configs
 
+    setup_subjobdir(c, jobdir, expanded_keys)
+    c = NamedTuple(c)
+    
     @info "Running main function with configuration:"
     println([k => c[k] for k in expanded_keys if k in keys(config)])
-    simdata = main(c)
-
-
-    @tagsave(joinpath(jobdir, savename(c, "jld2"; accesses=[k for k in expanded_keys if k in keys(c)])), simdata)
-    # pprintln(simdata)
+    traindata = main(c)
 end
 
-
-# NN, Θ, st, input, optprob, result = main1(config)
+results = collect_results(jobdir; subfolders=true, 
+    rinclude = [r"traindata"],
+    load_function = filename -> load(filename, "data"))
 
 # println(result)
 
@@ -114,8 +117,7 @@ end
 #     @save joinpath(job_dir, "trained_model.jld2") Θ_trained
 #     @save joinpath(job_dir, "losses_vs_iterations.jld2") losses
 
-#     end_time = now()
-#     elapsed = (end_time-start_time)
+#     
 #     elapsed_seconds = (end_time-start_time) / Millisecond(1000)
 #     elapsed_readable = Dates.format(convert(DateTime, elapsed), "HH:MM:SS")
 

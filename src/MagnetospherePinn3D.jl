@@ -53,6 +53,7 @@
 
         # File management
         setup_jobdir,
+        setup_subjobdir,
         import_params, 
         export_params,
         setup_configfile,

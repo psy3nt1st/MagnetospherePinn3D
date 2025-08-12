@@ -9,11 +9,20 @@ function setup_jobdir()
 
     # Jobs on local machine
     else
-        jobdir = "data/local_$(Dates.format(now(), "yyyy_mm_dd_HH_MM_SS"))"
+        jobdir = "data/local_$(now())"
         mkpath(jobdir)
     end
 
     return jobdir
+end
+
+function setup_subjobdir(config, jobdir, expanded_keys)
+    if isempty(expanded_keys)
+        config[:subjobdir] = jobdir
+    else
+        config[:subjobdir] = joinpath(jobdir, savename(config; accesses=[k for k in expanded_keys if k in keys(config)]))
+    end
+    wsave(joinpath(config[:subjobdir], "config.jld2"), "data", config)
 end
 
 function load_gradrubin_data(output_path::String)
