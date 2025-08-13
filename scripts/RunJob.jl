@@ -13,8 +13,9 @@ for c in configs
     
     @info "Running main function with configuration:"
     for (param, value) in [k => c[k] for k in expanded_keys if k in keys(config)]
-        println("\t$(Symbol(param)) = $value")
+        println("\t$(Symbol(param)) = $(get_short_name(value))")
     end
     traindata = main(c)
 
 end
+

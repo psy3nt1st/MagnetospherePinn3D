@@ -28,7 +28,9 @@ function setup_subjobdir(config, jobdir, expanded_keys)
     if isempty(expanded_keys)
         config[:subjobdir] = jobdir
     else
-        config[:subjobdir] = joinpath(jobdir, savename(config; accesses=[k for k in expanded_keys if k in keys(config)]))
+        active_expanded_keys = [k for k in expanded_keys if k in keys(config)]
+        config[:subjobdir] = joinpath(jobdir, 
+            savename(preprocess_config_for_savename(config, active_expanded_keys); accesses=active_expanded_keys))
     end
     wsave(joinpath(config[:subjobdir], "config.jld2"), "data", config)
 end
@@ -54,4 +56,25 @@ function load_gradrubin_data(output_path::String)
     μ = cos.(θ)
 
     return r, q, θ, μ, φ, alpha, u_q, u_theta, u_phi, B_q, B_theta, B_phi
+end
+
+function get_short_name(x)
+    if x isa Function
+        return nameof(x)
+    elseif typeof(x) <: AbstractLineSearch
+        return typeof(x).name.name
+    elseif typeof(x) <: Distribution
+        return typeof(x).name.name
+    else
+        return x
+    end
+end
+
+function preprocess_config_for_savename(config, keys)
+    d = Dict()
+    for k in keys
+        v = config[k]
+        d[k] = get_short_name(v)
+    end
+    return d
 end
