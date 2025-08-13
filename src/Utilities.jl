@@ -1,4 +1,4 @@
-function setup_jobdir()
+function setup_jobdir(config)
     
     # Jobs on the cluster
     if "SLURM_JOB_ID" in keys(ENV)
@@ -11,6 +11,12 @@ function setup_jobdir()
     else
         jobdir = "data/local_$(now())"
         mkpath(jobdir)
+    end
+
+    config[:jobdir] = jobdir
+    @tag!(config, storepatch=true)
+    open(joinpath(jobdir, "config.txt"), "w") do io
+        pprintln(io, config)
     end
 
     return jobdir

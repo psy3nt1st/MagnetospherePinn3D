@@ -13,9 +13,6 @@ using OrderedCollections
 include("Plotting.jl")
 include("PostProcess.jl")
 
-# Get path to data directory
-# dirs = filter(dir -> isdir(dir) && startswith(basename(dir), "ff3d") , readdir(datadir(); join=true))
-# # datadir = dirs[end-1]
 data_dir = datadir("theta1_sequence/")
 rundirs = sort(filter(dir -> isdir(dir), readdir(abspath(data_dir); join=true, sort=false)), lt=natural)
 rundir = rundirs[24]

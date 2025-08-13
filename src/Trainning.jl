@@ -53,7 +53,55 @@ function generate_input(config)
 	return input
 end
 
-function loss_function(input, NN, Θ, st, config)
+function calculate_individual_losses(q, μ, r_eq, θ_eq, ϕ_eq, ∇B, B∇α, B_mag, loss_normalization, N_points)
+
+    # MSE loss
+    if loss_normalization == "q"
+        l1 = sum(abs2, r_eq ./ q .^ 4)
+        l2 = sum(abs2, θ_eq ./ q .^ 4)
+        l3 = sum(abs2, ϕ_eq ./ q .^ 4)
+        l4 = sum(abs2, ∇B  .* .√(1 .- μ .^ 2) ./ q .^ 4)
+        l5 = sum(abs2, B∇α .* .√(1 .- μ .^ 2))
+    elseif loss_normalization == "B"
+        l1 = sum(abs2, r_eq ./ B_mag)
+        l2 = sum(abs2, θ_eq ./ B_mag)
+        l3 = sum(abs2, ϕ_eq ./ B_mag)
+        l4 = sum(abs2, ∇B .* .√(1 .- μ .^ 2) ./ B_mag)
+        l5 = sum(abs2, B∇α .* .√(1 .- μ .^ 2))
+    elseif loss_normalization == "none"
+        l1 = sum(abs2, r_eq)
+        l2 = sum(abs2, θ_eq)
+        l3 = sum(abs2, ϕ_eq)
+        l4 = sum(abs2, ∇B)
+        l5 = sum(abs2, B∇α)
+    end
+
+    # Lmax norm
+    if loss_normalization == "q"
+        l1_max = maximum(r_eq ./ q .^ 4)
+        l2_max = maximum(θ_eq ./ q .^ 4)
+        l3_max = maximum(ϕ_eq ./ q .^ 4)
+        l4_max = maximum(∇B  .* .√(1 .- μ .^ 2) ./ q .^ 4)
+        l5_max = maximum(B∇α .* .√(1 .- μ .^ 2))
+    elseif loss_normalization == "B"
+        l1_max = maximum(r_eq ./ B_mag)
+        l2_max = maximum(θ_eq ./ B_mag)
+        l3_max = maximum(ϕ_eq ./ B_mag)
+        l4_max = maximum(∇B .* .√(1 .- μ .^ 2) ./ B_mag)
+        l5_max = maximum(B∇α .* .√(1 .- μ .^ 2))
+    elseif loss_normalization == "none"
+        l1_max = maximum(r_eq)
+        l2_max = maximum(θ_eq)
+        l3_max = maximum(ϕ_eq)
+        l4_max = maximum(∇B)
+        l5_max = maximum(B∇α)
+    end
+
+    return [l1, l2, l3, l4, l5] ./ N_points, [l1_max, l2_max, l3_max, l4_max, l5_max]
+
+end
+
+function loss_function(input, NN, Θ, st, temp_state, config)
 	
     @unpack loss_normalization, loss_g, N_points = config
 
@@ -83,35 +131,16 @@ function loss_function(input, NN, Θ, st, config)
 	B∇α = calculate_Bdotgradα(q, μ, Br1, Bθ1, Bϕ1, dα_dq, dα_dμ, dα_dϕ, config) 
 
 	# Calculate loss
-    if loss_normalization == "q"
-        l1 = sum(abs2, r_eq ./ q .^ 4)
-        l2 = sum(abs2, θ_eq ./ q .^ 4)
-        l3 = sum(abs2, ϕ_eq ./ q .^ 4)
-        l4 = sum(abs2, ∇B  .* .√(1 .- μ .^ 2) ./ q .^ 4)
-        l5 = sum(abs2, B∇α .* .√(1 .- μ .^ 2))
-    elseif loss_normalization == "B"
-        l1 = sum(abs2, r_eq ./ B_mag)
-        l2 = sum(abs2, θ_eq ./ B_mag)
-        l3 = sum(abs2, ϕ_eq ./ B_mag)
-        l4 = sum(abs2, ∇B .* .√(1 .- μ .^ 2) ./ B_mag)
-        l5 = sum(abs2, B∇α .* .√(1 .- μ .^ 2))
-    elseif loss_normalization == "none"
-        l1 = sum(abs2, r_eq)
-        l2 = sum(abs2, θ_eq)
-        l3 = sum(abs2, ϕ_eq)
-        l4 = sum(abs2, ∇B)
-        l5 = sum(abs2, B∇α)
-    end
+    ls, ls_max = calculate_individual_losses(q, μ, r_eq, θ_eq, ϕ_eq, ∇B, B∇α, B_mag, loss_normalization, N_points)
 
-    ls = [l1, l2, l3, l4, l5] ./ N_points 
-
-    # loss_g((l1 + l2 + l3 + l4 + l5) / params.architecture.N_points)
-    # return loss_g(sum(ls)), ls
+    temp_state[:individual_losses] = ls
+    temp_state[:Linf_norm] = sum(ls_max)
+    temp_state[:individual_Linf_norms] = ls_max
+    
     return loss_g(sum(ls))
-
 end
 
-function callback(p, l, losses, prog, invH, config)
+function callback(p, l, prog, invH, temp_state, traindata, config)
 
     @unpack loss_g = config
 
@@ -120,11 +149,10 @@ function callback(p, l, losses, prog, invH, config)
 		l = exp(l)
 	end
 
-	# Store loss history
-	push!(losses[1], l)
-	# for i in eachindex(ls)
-	# 	push!(losses[i+1], ls[i])
-	# end
+    push!(traindata[:losses], l)
+    push!(traindata[:individual_losses], temp_state[:individual_losses])
+    push!(traindata[:Linf_norm], temp_state[:Linf_norm])
+    push!(traindata[:individual_Linf_norms], temp_state[:individual_Linf_norms])
 
 	# Store the last inverse Hessian (only in the quasi-Newton stage)
 	if "~inv(H)" ∈ keys(p.original.metadata)
@@ -132,33 +160,37 @@ function callback(p, l, losses, prog, invH, config)
 	end
 
 	# Update progress bar
-	next!(prog, showvalues=[(:iteration, @sprintf("%d", length(losses[1]))) (:Loss, @sprintf("%.4e", l))])
+	next!(prog, showvalues=[(:iteration, @sprintf("%d", length(traindata[:losses]))) (:Loss, @sprintf("%.4e", l))])
 	flush(stdout)
 	
 	return false
 end
 
 function setup_optprob(NN, Θ, st, config)
+    temp_state = OrderedDict{Symbol, Any}()
 
 	input = generate_input(config)
-	optf = Optimization.OptimizationFunction((Θ, input) -> loss_function(input, NN, Θ, st, config), 
+	optf = Optimization.OptimizationFunction((Θ, input) -> loss_function(input, NN, Θ, st, temp_state, config), 
         Optimization.AutoZygote())
 	optprob = Optimization.OptimizationProblem(optf, Θ, input)
 	optresult = Optimization.solve(optprob, Adam(), maxiters = 1)
 
-	return optresult, optprob
+	return optresult, optprob, temp_state
 end
  
 
-function train_pinn!(optresult, optprob, config)
-
+function train_pinn!(optresult, optprob, temp_state, config)
     start_time = now()
 
-    @unpack N_sets, adam_sets, adam_iters, quasiNewton_method, quasiNewton_iters, linesearch, keep_checkpoints, subjobdir = config
+    @unpack N_sets, adam_sets, adam_iters, quasiNewton_method, quasiNewton_iters, linesearch, subjobdir = config
     
     traindata = OrderedDict{Symbol, Any}()
+    traindata[:losses] = Float64[]
+    traindata[:individual_losses] = Vector{Float64}[]
+    traindata[:Linf_norm] = Float64[]
+    traindata[:individual_Linf_norms] = Vector{Float64}[]
+
     invH = Base.RefValue{AbstractArray{Float64, 2}}()
-    losses = [Float64[] for _ in 1:6]
 
 	# Initialise the inverse Hessian
 	initial_invH = nothing   
@@ -194,7 +226,7 @@ function train_pinn!(optresult, optprob, config)
 		optresult = Optimization.solve(
             optprob,
             optimizer,
-            callback = (p, l) -> callback(p, l, losses, prog, invH, config),
+            callback = (p, l) -> callback(p, l, prog, invH, temp_state, traindata, config),
             maxiters = maxiters,
             extended_trace = true
         )
@@ -208,21 +240,14 @@ function train_pinn!(optresult, optprob, config)
 
         duration = now()-start_time
 
-        # Store the results
+        # Store results (losses and other data are stored inside the callback function)
         traindata[:Θ] = optresult.u |> Lux.cpu_device()
-        traindata[:losses] = losses
         traindata[:start_time] = start_time
         traindata[:duration] = duration / Millisecond(1000)
         traindata[:duration_readable] = Dates.format(convert(DateTime, duration), "HH:MM:SS")
 
-        @tagsave(joinpath(subjobdir, "traindata.jld2"), "data", traindata)
+        wsave(joinpath(subjobdir, "traindata.jld2"), "data", traindata)
 
-        # if keep_checkpoints
-        #     checkpoints_dir = mkpath(joinpath(job_dir, "checkpoints"))
-            
-        #     @save joinpath(checkpoints_dir, "trained_model_$i.jld2") Θ_trained
-        #     @save joinpath(checkpoints_dir, "losses_vs_iterations_$i.jld2") losses
-        # end
 	end
    
 	return traindata

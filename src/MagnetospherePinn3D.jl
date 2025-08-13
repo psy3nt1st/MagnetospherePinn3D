@@ -1,7 +1,6 @@
     module MagnetospherePinn3D
 
     using ComponentArrays
-    using Configurations
     using Dates
     using Distributions
     using DrWatson
@@ -11,11 +10,10 @@
     using LineSearches
     using OptimizationOptimJL
     using OrderedCollections
-    using Parameters
+    using PrettyPrint
     using Printf
     using ProgressMeter
     using Random
-    using TOML
     using Zygote
 
     export 
@@ -78,7 +76,6 @@
     include("Config.jl")
     include("Equations.jl")
     include("Trainning.jl")
-    include("Types.jl")
     include("Utilities.jl")
 
     end # module MagnetospherePinn3D
