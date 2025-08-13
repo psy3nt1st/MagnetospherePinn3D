@@ -252,3 +252,18 @@ function train_pinn!(optresult, optprob, temp_state, config)
    
 	return traindata
 end
+
+function main(config)
+
+    @info "Creating neural network"
+    NN, Θ, st = create_neural_network(config)
+
+    @info "Setting up optimization problem"
+    optresult, optprob, temp_state = setup_optprob(NN, Θ, st, config)
+
+    @info "Training neural network"
+
+    traindata = train_pinn!(optresult, optprob, temp_state, config)
+
+    return traindata
+end

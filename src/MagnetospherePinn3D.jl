@@ -17,16 +17,18 @@
     using Zygote
 
     export 
-        # Types
-        Params,  
-        
-        # Packages
-        Distributions,
-        Lux,  
-        Random, 
-
         # Configuration function
         create_config,
+
+        # File management
+        setup_jobdir,
+        setup_subjobdir,
+
+        # Main function
+        main,
+
+        # DrWatson functions
+        dict_list,
 
         # Neural network functions
         generate_input, 
@@ -49,29 +51,13 @@
         Br_surface,
         h_boundary,
 
-        # File management
-        setup_jobdir,
-        setup_subjobdir,
-        import_params, 
-        export_params,
-        setup_configfile,
-
         # Equations
-        grad,
-        diver,
-        curl,
-        laplacian,
-        scalar_product,
         calculate_derivatives,
         calculate_divergence,
         calculate_Bdotgradα,
         calculate_r_equation,
         calculate_θ_equation,
-        calculate_ϕ_equation,
-        calculate_divergence,
-        calculate_Bdotgradα,
-        calculate_gradB2,
-        calculate_αS_equation
+        calculate_ϕ_equation
 
     include("Config.jl")
     include("Equations.jl")

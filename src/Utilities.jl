@@ -2,14 +2,16 @@ function setup_jobdir(config)
     
     # Jobs on the cluster
     if "SLURM_JOB_ID" in keys(ENV)
-        jobid = ENV["SLURM_JOB_ID"]
-        jobname = ENV["SLURM_JOB_NAME"]
-        jobdir = joinpath("data", "$(jobname)_$(jobid)")
+        # jobid = ENV["SLURM_JOB_ID"]
+        # jobname = ENV["SLURM_JOB_NAME"]
+        # jobdir = joinpath("data", "$(jobname)_$(jobid)")
+        jobdir = joinpath("data", "cluster_$(now())")
+        config[:jobid] = ENV["SLURM_JOB_ID"]
         mkpath(jobdir)
 
     # Jobs on local machine
     else
-        jobdir = "data/local_$(now())"
+        jobdir = joinpath("data", "local_$(now())")
         mkpath(jobdir)
     end
 
